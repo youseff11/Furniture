@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join the Club | Lusso</title>
+
+<style>
+    :root {
+        --accent-gold: #b8860b;
+        --luxury-bg: #fffcf5;
+        --text-main: #1a1a1a;
+        --text-dim: #666666;
+        --border-luxury: rgba(184, 134, 11, 0.2);
+        --luxury-ease: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * {
+        box-sizing: border-box;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--luxury-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: var(--text-main);
+    }
+
+    /* --- الحاوية الأساسية (تصميم كلاسيكي نظيف) --- */
+    .auth-box {
+        width: 100%;
+        max-width: 480px;
+        background: #ffffff;
+        border: 1px solid var(--border-luxury);
+        position: relative;
+        padding: 60px 45px;
+        box-shadow: 0 40px 100px rgba(184, 134, 11, 0.05);
+    }
+
+    /* زخرفة علوية بسيطة لإعطاء طابع الفخامة */
+    .auth-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 2px;
+        background: var(--accent-gold);
+    }
+
+    .auth-content {
+        position: relative;
+        width: 100%;
+    }
+
+    .auth-content h1 {
+        font-family: 'Playfair Display', serif;
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 2.2rem;
+        font-weight: 400;
+        letter-spacing: 1px;
+    }
+
+    .auth-content p {
+        text-align: center;
+        margin-bottom: 45px;
+        color: var(--text-dim);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+    }
+
+    .input-group {
+        margin-bottom: 25px;
+    }
+
+    .input-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--accent-gold);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 15px 0;
+        border: none;
+        border-bottom: 1px solid var(--border-luxury);
+        outline: none;
+        font-size: 0.95rem;
+        background: transparent;
+        color: var(--text-main);
+        transition: var(--luxury-ease);
+        border-radius: 0;
+    }
+
+    .input-group input:focus {
+        border-bottom-color: var(--text-main);
+    }
+
+    .input-group input::placeholder {
+        color: #ccc;
+        font-size: 0.85rem;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 20px;
+        border: 1px solid var(--text-main);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--text-main);
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        transition: var(--luxury-ease);
+        margin-top: 20px;
+    }
+
+    .btn:hover {
+        background: transparent;
+        color: var(--text-main);
+        transform: translateY(-5px);
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 35px;
+        font-size: 12px;
+        color: var(--text-dim);
+    }
+
+    .auth-footer a {
+        color: var(--text-main);
+        text-decoration: none;
+        font-weight: 700;
+        margin-left: 5px;
+        border-bottom: 1px solid var(--accent-gold);
+    }
+
+    .auth-footer a:hover {
+        color: var(--accent-gold);
+    }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<div class="auth-box">
+    <div class="auth-content">
+        <h1>Create Account</h1>
+        <p>Become part of the Lusso world</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="Your unique name" required>
+            </div>
+
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="example@lusso.com" required>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Min. 8 characters" required>
+            </div>
+
+            <div class="input-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" placeholder="Repeat password" required>
+            </div>
+
+            <button class="btn">Sign Up</button>
+        </form>
+
+        <div class="auth-footer">
+            Already a member?
+            <a href="{% url 'login' %}">Log In</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZH9JG248D6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZH9JG248D6');
+</script>
+
+{% extends 'base.html' %} 
+{% block content %}
+<style>
+    :root {
+        --accent-gold: #b8860b;
+        --luxury-bg: #fffcf5;
+        --card-white: #ffffff;
+        --text-main: #1a1a1a;
+        --text-dim: #666666;
+        --border-luxury: rgba(184, 134, 11, 0.15);
+        --luxury-ease: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .checkout-wrapper {
+        padding: 160px 20px 100px;
+        background: var(--luxury-bg);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        color: var(--text-main);
+    }
+
+    .checkout-container-outer {
+        position: relative;
+        max-width: 1000px;
+        width: 100%;
+        background: var(--card-white);
+        border: 1px solid var(--border-luxury);
+        box-shadow: 0 30px 70px rgba(184, 134, 11, 0.05);
+    }
+
+    .checkout-container {
+        position: relative;
+        z-index: 5;
+        width: 100%;
+        padding: 60px 50px;
+    }
+
+    .checkout-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .checkout-header h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        font-weight: 400;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+    }
+
+    .checkout-header p {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .checkout-form {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 25px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+
+    .form-group label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--accent-gold);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group input, .form-group select {
+        background: #fff;
+        border: 1px solid var(--border-luxury);
+        padding: 15px 18px;
+        color: var(--text-main);
+        font-size: 0.95rem;
+        width: 100%;
+        box-sizing: border-box;
+        transition: var(--luxury-ease);
+        border-radius: 0; /* الحواف الحادة تعطي شعوراً بالفخامة */
+    }
+
+    .form-group input:focus, .form-group select:focus {
+        outline: none;
+        border-color: var(--text-main);
+        background: #fafafa;
+    }
+
+    .order-summary-box {
+        background: #fdfaf3;
+        padding: 30px;
+        border: 1px solid var(--border-luxury);
+        margin-top: 15px;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .summary-label {
+        font-size: 12px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        font-weight: 600;
+    }
+
+    .summary-value {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.8rem;
+        color: var(--text-main);
+    }
+
+    .submit-area {
+        grid-column: span 2;
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .btn-confirm {
+        background: var(--text-main);
+        color: #fff;
+        padding: 22px;
+        border: 1px solid var(--text-main);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        cursor: pointer;
+        transition: var(--luxury-ease);
+        text-align: center;
+    }
+
+    .btn-confirm:hover {
+        background: transparent;
+        color: var(--text-main);
+        transform: translateY(-5px);
+    }
+
+    .btn-back-cart {
+        text-align: center;
+        color: var(--text-dim);
+        text-decoration: none;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: 0.3s;
+    }
+
+    .btn-back-cart:hover {
+        color: var(--accent-gold);
+        letter-spacing: 3px;
+    }
+
+    @media (max-width: 768px) {
+        .checkout-form { grid-template-columns: 1fr; }
+        .form-group.full-width, .submit-area { grid-column: span 1; }
+        .checkout-container { padding: 40px 25px; }
+        .checkout-wrapper { padding-top: 120px; }
+    }
+</style>
+
+<div class="checkout-wrapper">
+    <div class="checkout-container-outer animate__animated animate__fadeIn">
+        <div class="checkout-container">
+            
+            <div class="checkout-header">
+                <h2>Secure <span style="color: var(--accent-gold);">Checkout</span></h2>
+                <p>Confirm your acquisition and delivery details</p>
+            </div>
+
+            <form action="{% url 'checkout' %}" method="POST" class="checkout-form">
+                {% csrf_token %}
+                
+                <div class="form-group full-width">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="example@mail.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone" placeholder="01xxxxxxxxx" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Governorate</label>
+                    <select name="governorate" required>
+                        <option value="" disabled selected>Select your city</option>
+                        <option value="Cairo">Cairo</option>
+                        <option value="Giza">Giza</option>
+                        <option value="Alexandria">Alexandria</option>
+                        <option value="Dakahlia">Dakahlia</option>
+                        <option value="Red Sea">Red Sea</option>
+                        <option value="Beheira">Beheira</option>
+                        <option value="Fayoum">Fayoum</option>
+                        <option value="Gharbia">Gharbia</option>
+                        <option value="Ismailia">Ismailia</option>
+                        <option value="Monufia">Monufia</option>
+                        <option value="Minya">Minya</option>
+                        <option value="Qalyubia">Qalyubia</option>
+                        <option value="New Valley">New Valley</option>
+                        <option value="Suez">Suez</option>
+                        <option value="Aswan">Aswan</option>
+                        <option value="Assiut">Assiut</option>
+                        <option value="Beni Suef">Beni Suef</option>
+                        <option value="Port Said">Port Said</option>
+                        <option value="Damietta">Damietta</option>
+                        <option value="Sharkia">Sharkia</option>
+                        <option value="South Sinai">South Sinai</option>
+                        <option value="Kafr El Sheikh">Kafr El Sheikh</option>
+                        <option value="Matrouh">Matrouh</option>
+                        <option value="Luxor">Luxor</option>
+                        <option value="Qena">Qena</option>
+                        <option value="North Sinai">North Sinai</option>
+                        <option value="Sohag">Sohag</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Detailed Address</label>
+                    <input type="text" name="address" placeholder="Street, Building, Apartment" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <div class="order-summary-box">
+                        <div class="summary-item">
+                            <span class="summary-label">Grand Total:</span>
+                            <span class="summary-value">{{ total_price|floatformat:0 }} LE</span>
+                        </div>
+                        <p style="font-size: 10px; margin-top: 15px; color: var(--text-dim); text-align: center; letter-spacing: 1px;">
+                            Payment Method: Cash on Delivery
+                        </p>
+                    </div>
+                </div>
+
+                <div class="submit-area">
+                    <button type="submit" class="btn-confirm">Place Order</button>
+                    <a href="{% url 'cart_view' %}" class="btn-back-cart">
+                         Return to Bag
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+  if (typeof fbq !== 'undefined') {
+    fbq('track', 'InitiateCheckout', {
+      value: {{ total_price }},
+      currency: 'EGP',
+      content_category: 'Checkout'
+    });
+  }
+
+  const checkoutForm = document.querySelector('.checkout-form');
+  const formInputs = checkoutForm.querySelectorAll('input, select');
+  
+  let infoTracked = false;
+  formInputs.forEach(input => {
+    input.addEventListener('input', function() {
+      if (!infoTracked && typeof fbq !== 'undefined') {
+        fbq('track', 'AddPaymentInfo', {
+          content_category: 'Checkout',
+          value: {{ total_price }},
+          currency: 'EGP'
+        });
+        infoTracked = true;
+      }
+    });
+  });
+
+  checkoutForm.addEventListener('submit', function() {
+    if (typeof fbq !== 'undefined') {
+        fbq('trackCustom', 'AttemptedOrderConfirmation', {
+            total_value: {{ total_price }}
+        });
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,379 @@
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZH9JG248D6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZH9JG248D6');
+</script>
+
+{% extends 'base.html' %} 
+{% block content %}
+<style>
+    :root {
+        /* الهوية البصرية الموحدة لـ Lusso */
+        --accent-gold: #b8860b;
+        --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
+        --luxury-bg: #fffcf5;
+        --card-white: #ffffff;
+        --text-main: #1a1a1a;
+        --text-dim: #666666;
+        --border-luxury: rgba(184, 134, 11, 0.15);
+        --luxury-ease: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    body { margin: 0; background: var(--luxury-bg); color: var(--text-main); font-family: 'Montserrat', sans-serif; }
+
+    .detail-wrapper { 
+        padding: 160px 15px 100px; 
+        min-height: 100vh; 
+        display: flex; 
+        justify-content: center; 
+    }
+
+    .detail-container-outer {
+        position: relative; 
+        max-width: 1200px; 
+        width: 100%; 
+        background: var(--card-white);
+        border: 1px solid var(--border-luxury);
+        box-shadow: 0 30px 70px rgba(184, 134, 11, 0.05);
+    }
+
+    .detail-container {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+    }
+
+    @media (max-width: 900px) {
+        .detail-container { grid-template-columns: 1fr; }
+        .image-section { border-right: none !important; border-bottom: 1px solid var(--border-luxury); }
+    }
+
+    .image-section {
+        position: relative; 
+        background: #fdfaf3; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        padding: 40px; 
+        border-right: 1px solid var(--border-luxury);
+    }
+
+    .main-display {
+        width: 100%; 
+        height: 550px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .product-main-img { 
+        width: 100%; height: 100%; object-fit: contain; 
+        transition: var(--luxury-ease);
+    }
+
+    .thumbnail-gallery {
+        display: flex; gap: 15px; margin-top: 30px; flex-wrap: wrap; justify-content: center;
+    }
+
+    .thumb {
+        width: 70px; height: 90px; 
+        border: 1px solid var(--border-luxury);
+        cursor: pointer; transition: 0.3s; opacity: 0.6;
+        background: #fff;
+    }
+
+    .thumb.active { border-color: var(--accent-gold); opacity: 1; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .detail-discount-badge {
+        position: absolute; top: 25px; left: 25px; 
+        background: var(--gold-gradient); color: #fff;
+        padding: 8px 18px; font-size: 10px; font-weight: 700; letter-spacing: 2px;
+        box-shadow: 0 5px 15px rgba(184, 134, 11, 0.2);
+    }
+
+    .detail-sold-out-badge {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: rgba(255,255,255,0.9); color: var(--accent-gold); padding: 15px 40px;
+        border: 1px solid var(--accent-gold); font-size: 1.1rem; letter-spacing: 5px; z-index: 20; display: none;
+        font-family: 'Playfair Display', serif;
+    }
+
+    .info-section { padding: 60px 50px; display: flex; flex-direction: column; background: #fff; }
+    
+    .category-label { 
+        color: var(--accent-gold); font-size: 11px; font-weight: 700; 
+        text-transform: uppercase; letter-spacing: 4px; margin-bottom: 20px; 
+    }
+
+    .product-title { 
+        font-family: 'Playfair Display', serif; font-size: 2.8rem; 
+        margin: 0 0 25px 0; font-weight: 400; letter-spacing: 1px; color: var(--text-main);
+    }
+
+    .price-group { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; }
+    .current-price { 
+        font-size: 2rem; color: var(--text-main); font-weight: 400; 
+        font-family: 'Playfair Display', serif;
+    }
+    .old-price { font-size: 1.2rem; text-decoration: line-through; color: var(--text-dim); }
+
+    .selection-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 15px; display: block; font-weight: 600; }
+    
+    .color-dots { display: flex; gap: 18px; margin-bottom: 35px; }
+    .color-dot { 
+        width: 35px; height: 35px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); 
+        cursor: pointer; transition: 0.4s; position: relative;
+    }
+    .color-dot.active { transform: scale(1.15); }
+    .color-dot.active::after {
+        content: ''; position: absolute; inset: -6px; border: 1px solid var(--accent-gold); border-radius: 50%;
+    }
+
+    .size-options { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 45px; }
+    .size-chip { 
+        min-width: 55px; height: 45px; display: flex; align-items: center; justify-content: center;
+        border: 1px solid var(--border-luxury); font-size: 13px; cursor: pointer; transition: 0.4s;
+        background: #fff; color: var(--text-main);
+    }
+    .size-chip.active { background: var(--accent-gold); color: #fff; border-color: var(--accent-gold); }
+    .size-chip.out-of-stock { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+
+    .action-btns { display: flex; flex-direction: column; gap: 20px; }
+    .btn-primary { 
+        background: var(--text-main); color: #fff; padding: 22px;
+        text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: 3px;
+        font-size: 12px; text-decoration: none; transition: var(--luxury-ease);
+        border: 1px solid var(--text-main);
+        cursor: pointer;
+    }
+    .btn-primary:hover { background: transparent; color: var(--text-main); }
+    
+    .btn-back { 
+        text-align: center; color: var(--text-dim); font-size: 11px; 
+        text-transform: uppercase; letter-spacing: 2px; text-decoration: none; margin-top: 15px;
+        transition: 0.3s;
+    }
+    .btn-back:hover { color: var(--accent-gold); letter-spacing: 3px; }
+
+    .btn-disabled { filter: grayscale(1); opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .description { 
+        color: var(--text-dim); font-size: 1rem; line-height: 2; 
+        margin-bottom: 45px; font-weight: 300; border-top: 1px solid var(--border-luxury);
+        padding-top: 30px;
+    }
+
+    /* --- Luxury Toast Notification Style --- */
+    .lusso-toast {
+        position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+        background: var(--text-main); color: #fff;
+        padding: 15px 35px; min-width: 300px;
+        display: flex; align-items: center; justify-content: center; gap: 15px;
+        z-index: 9999; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        border: 1px solid var(--accent-gold);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .lusso-toast.active { top: 30px; }
+    .lusso-toast .icon { color: var(--accent-gold); font-size: 20px; }
+    .lusso-toast .msg { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; font-weight: 500; }
+</style>
+
+<div id="lussoToast" class="lusso-toast">
+    <span class="icon">✓</span>
+    <span class="msg">Added to your collection</span>
+</div>
+
+<div class="detail-wrapper">
+    <div class="detail-container-outer animate__animated animate__fadeIn">
+        <div class="detail-container">
+            <div class="image-section" id="imgSection">
+                <div class="detail-sold-out-badge" id="soldOutLabel">NOT AVAILABLE</div>
+                {% if product.discount_price %}
+                    <div class="detail-discount-badge">{{ product.discount_percentage }}% COLLECTION OFFER</div>
+                {% endif %}
+                
+                <div class="main-display">
+                    {% if product.variants.first %}
+                        <img src="{{ product.variants.first.variant_image.url }}" alt="{{ product.name }}" id="mainDetailImg" class="product-main-img">
+                    {% else %}
+                        <img src="{{ product.main_image.url }}" alt="Lusso Collection" id="mainDetailImg" class="product-main-img">
+                    {% endif %}
+                </div>
+
+                <div class="thumbnail-gallery" id="thumbGallery"></div>
+            </div>
+
+            <div class="info-section">
+                <span class="category-label">{{ product.category.name|default:"Lusso Exclusive" }}</span>
+                <h1 class="product-title">{{ product.name }}</h1>
+                
+                <div class="price-group">
+                    <span class="current-price">{{ product.discount_price|default:product.price|floatformat:0 }} LE</span>
+                    {% if product.discount_price %}
+                        <span class="old-price">{{ product.price|floatformat:0 }} LE</span>
+                    {% endif %}
+                </div>
+
+                <div class="selection-group">
+                    <span class="selection-label">Color Portfolio — <span id="selected-color-name" style="color: var(--accent-gold);">Select</span></span>
+                    <div class="color-dots">
+                        {% for variant in product.variants.all|dictsortreversed:"total_variant_stock" %}
+                        <div class="color-dot {% if variant.total_variant_stock == 0 %}sold-out-dot{% endif %}" 
+                             style="background-color: {{ variant.color_code }};" 
+                             data-color="{{ variant.color_name }}" 
+                             data-main-img="{{ variant.variant_image.url }}"
+                             data-stock="{{ variant.total_variant_stock }}" 
+                             onclick="selectVariant(this)">
+                             
+                             <script type="application/json" class="v-images">["{{ variant.variant_image.url }}"{% for extra in variant.additional_images.all %},"{{ extra.image.url }}"{% endfor %}]</script>
+                             <script type="application/json" class="v-data">[{% for s in variant.sizes.all %}{"n":"{{s.size_name}}","s":{{s.stock}}}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <span class="selection-label">Size Selection — <span id="selected-size-name" style="color: var(--accent-gold);">Select</span></span>
+                    <div class="size-options" id="sizeOptionsContainer"></div>
+                </div>
+
+                <div class="description">{{ product.description }}</div>
+
+                <div class="action-btns">
+                    <a href="javascript:void(0)" id="add-to-cart-btn" class="btn-primary">Add to Bag</a>
+                    <a href="{% url 'shop' %}" class="btn-back">Return to Boutique</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selColor = "", selSize = "";
+    const productPrice = {{ product.discount_price|default:product.price|floatformat:0 }};
+    const productName = "{{ product.name }}";
+    const productId = "{{ product.id }}";
+
+    function generateEventID() { 
+        return "evt_" + Date.now() + "_" + Math.floor(Math.random() * 1000); 
+    }
+
+    function showLussoToast() {
+        const toast = document.getElementById('lussoToast');
+        toast.classList.add('active');
+        setTimeout(() => { toast.classList.remove('active'); }, 3000);
+    }
+
+    function selectVariant(el) {
+        const cName = el.dataset.color;
+        const stock = parseInt(el.dataset.stock);
+        let images = [];
+        let sizes = [];
+        
+        try {
+            images = JSON.parse(el.querySelector('.v-images').textContent);
+            sizes = JSON.parse(el.querySelector('.v-data').textContent);
+        } catch (e) {
+            images = [el.dataset.mainImg];
+        }
+
+        selColor = cName;
+        document.getElementById('selected-color-name').innerText = cName;
+
+        const thumbGallery = document.getElementById('thumbGallery');
+        const mainImg = document.getElementById('mainDetailImg');
+        thumbGallery.innerHTML = "";
+
+        images.forEach((imgUrl, index) => {
+            const thumb = document.createElement('div');
+            thumb.className = `thumb ${index === 0 ? 'active' : ''}`;
+            thumb.innerHTML = `<img src="${imgUrl}">`;
+            thumb.onclick = () => {
+                mainImg.style.opacity = '0.3';
+                setTimeout(() => {
+                    mainImg.src = imgUrl;
+                    mainImg.style.opacity = '1';
+                    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+                    thumb.classList.add('active');
+                }, 300);
+            };
+            thumbGallery.appendChild(thumb);
+        });
+        mainImg.src = images[0];
+
+        const soldOutLabel = document.getElementById('soldOutLabel');
+        soldOutLabel.style.display = stock === 0 ? 'block' : 'none';
+
+        const container = document.getElementById('sizeOptionsContainer');
+        container.innerHTML = ""; 
+        selSize = "";
+        document.getElementById('selected-size-name').innerText = "Select";
+
+        sizes.forEach(s => {
+            const chip = document.createElement('div');
+            chip.className = `size-chip ${s.s === 0 ? 'out-of-stock' : ''}`;
+            chip.innerText = s.n;
+            if(s.s > 0) {
+                chip.onclick = () => {
+                    selSize = s.n;
+                    document.getElementById('selected-size-name').innerText = s.n;
+                    document.querySelectorAll('.size-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    updateBtn();
+                };
+            }
+            container.appendChild(chip);
+        });
+
+        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+        el.classList.add('active');
+        updateBtn();
+    }
+
+    function updateBtn() {
+        const btn = document.getElementById('add-to-cart-btn');
+        const isOut = document.getElementById('soldOutLabel').style.display === 'block';
+
+        if (selColor && selSize && !isOut) {
+            btn.classList.remove('btn-disabled');
+            btn.innerText = "Add to Bag";
+        } else {
+            btn.classList.add('btn-disabled');
+            if (isOut) btn.innerText = "Unavailable";
+            else btn.innerText = "Select Color & Size";
+        }
+    }
+
+    document.getElementById('add-to-cart-btn').addEventListener('click', function(e) {
+        if (!this.classList.contains('btn-disabled')) {
+            const eid = generateEventID();
+            
+            // 1. Facebook Track
+            if (typeof fbq !== 'undefined') {
+                fbq('track', 'AddToCart', {
+                    content_name: productName, 
+                    content_ids: [productId], 
+                    content_type: 'product',
+                    value: productPrice, 
+                    currency: 'EGP'
+                }, { eventID: eid });
+            }
+
+            // 2. Show Luxury Notification
+            showLussoToast();
+
+            // 3. Redirect to Backend After a small delay to see the toast
+            setTimeout(() => {
+                window.location.href = `/add-to-cart/${productId}/?color=${encodeURIComponent(selColor)}&size=${encodeURIComponent(selSize)}&eid=${eid}`;
+            }, 800);
+
+        } else e.preventDefault();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const firstVariant = document.querySelector('.color-dot:not(.sold-out-dot)') || document.querySelector('.color-dot');
+        if (firstVariant) firstVariant.click();
+    });
+</script>
+{% endblock %}

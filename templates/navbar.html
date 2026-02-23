@@ -1,0 +1,264 @@
+<link rel="icon" type="image/png" href="https://img.icons8.com/ios-filled/50/c5a059/crown.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    :root {
+        --accent-gold: #c5a059;
+        --luxury-black: #1a1a1a;
+        --soft-white: #f8f8f8;
+        /* الخطوط */
+        --font-heading: 'Amiri', serif;
+        --font-body: 'IBM Plex Sans Arabic', sans-serif;
+        --font-english: 'Playfair Display', serif;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: var(--soft-white);
+        /* الخط الافتراضي للموقع */
+        font-family: var(--font-body);
+    }
+
+    .navbar {
+        width: 100%;
+        background: rgba(26, 26, 26, 0.98);
+        backdrop-filter: blur(15px);
+        padding: 15px 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+    }
+
+    .nav-logo {
+        font-family: var(--font-english);
+        font-size: 26px;
+        font-weight: 300;
+        color: #ffffff;
+        letter-spacing: 2px;
+        text-decoration: none;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-logo span { 
+        color: var(--accent-gold); 
+        font-weight: 700;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .nav-links a {
+        color: #e0e0e0;
+        text-decoration: none;
+        font-size: 15px; /* حجم مثالي للخط العربي */
+        font-weight: 400;
+        font-family: var(--font-body);
+        transition: all 0.4s ease;
+        position: relative;
+        padding: 5px 0;
+    }
+
+    .nav-links a::after {
+        content: "";
+        position: absolute;
+        width: 0%;
+        height: 1.5px;
+        background: var(--accent-gold);
+        right: 0; /* يبدأ الخط من اليمين في العربي */
+        bottom: -2px;
+        transition: all 0.4s ease;
+    }
+
+    .nav-links a:hover { 
+        color: var(--accent-gold); 
+    }
+    
+    .nav-links a:hover::after { 
+        width: 100%; 
+    }
+
+    .nav-links a.admin-link {
+        color: var(--accent-gold);
+        border: 1px solid var(--accent-gold);
+        padding: 4px 15px;
+        border-radius: 2px;
+        font-weight: 600;
+    }
+
+    .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+    }
+
+    .cart-icon-wrapper {
+        position: relative;
+        color: #ffffff;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .cart-icon-wrapper:hover {
+        color: var(--accent-gold);
+    }
+
+    .cart-badge-main {
+        background: var(--accent-gold);
+        color: #1a1a1a;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        position: absolute;
+        top: -8px;
+        right: -12px;
+        font-family: sans-serif; /* للأرقام */
+    }
+
+    .admin-badge {
+        font-family: var(--font-body);
+        font-size: 12px;
+        color: var(--accent-gold);
+        border-right: 1px solid #444;
+        padding-right: 15px;
+    }
+
+    /* القائمة في الجوال */
+    .mobile-controls {
+        display: none;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .menu-toggle {
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .menu-toggle span {
+        width: 28px;
+        height: 1.5px;
+        background: #ffffff;
+        transition: 0.3s;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .navbar { padding: 15px 25px; }
+        .nav-links { gap: 15px; }
+        .nav-links a { font-size: 14px; }
+    }
+
+    @media (max-width: 768px) {
+        .mobile-controls { display: flex; }
+        .nav-actions { display: none; }
+        
+        .nav-links {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: rgba(26, 26, 26, 0.98);
+            flex-direction: column;
+            padding: 30px 0;
+            display: none;
+            border-top: 1px solid #333;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .nav-links.active { display: flex; }
+        .admin-badge { border-right: none; padding-right: 0; }
+    }
+</style>
+
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="nav-logo">
+        Lusso <span>Gallery</span>
+    </a>
+
+    <div class="nav-links" id="navLinks">
+        <a href="{% url 'home' %}">الرئيسية</a>
+        <a href="{% url 'shop' %}">المعرض</a>
+        <a href="{% url 'offers' %}">عروض حصرية</a>
+        
+        {% if user.is_authenticated and user.is_superuser %}
+            <a href="{% url 'dashboard' %}" class="admin-link">لوحة التحكم</a>
+        {% endif %}
+        <a href="{% url 'policies' %}">الاحكام والشروط</a>
+        <a href="{% url 'about' %}">قصتنا</a>
+        <a href="{% url 'contact' %}">اتصل بنا</a>
+    </div>
+
+    <div class="nav-actions">
+        {% if user.is_authenticated and user.is_superuser %}
+             <span class="admin-badge">مدير النظام</span>
+        {% endif %}
+
+        <a href="{% url 'cart_view' %}" class="cart-icon-wrapper">
+            <i class="fas fa-shopping-bag" style="font-size: 20px;"></i>
+            {% if cart_count > 0 %}
+                <span class="cart-badge-main">{{ cart_count }}</span>
+            {% endif %}
+        </a>
+    </div>
+
+    <div class="mobile-controls">
+        <a href="{% url 'cart_view' %}" class="cart-icon-wrapper">
+            <i class="fas fa-shopping-bag" style="font-size: 20px;"></i>
+            {% if cart_count > 0 %}
+                <span class="cart-badge-main">{{ cart_count }}</span>
+            {% endif %}
+        </a>
+
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+</nav>
+
+<script>
+    const menuToggle = document.getElementById("menuToggle");
+    const navLinks = document.getElementById("navLinks");
+
+    menuToggle.addEventListener("click", () => {
+        navLinks.classList.toggle("active");
+        
+        const spans = menuToggle.querySelectorAll('span');
+        spans.forEach(span => {
+            span.style.background = navLinks.classList.contains('active') ? '#c5a059' : '#ffffff';
+        });
+    });
+
+    // إغلاق القائمة عند الضغط على أي رابط في الجوال
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+        });
+    });
+</script>

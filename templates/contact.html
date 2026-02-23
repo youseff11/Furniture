@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    :root {
+        /* الهوية البصرية لـ Lusso - نسخة فاتحة */
+        --accent-gold: #b8860b; /* ذهبي أغمق قليلاً للنصوص لضمان الوضوح */
+        --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
+        /* الخلفية الجديدة: تدرج ذهبي فاتح جداً وناعم */
+        --light-gold-bg: linear-gradient(180deg, #fffcf5 0%, #f9f1e0 100%);
+        --card-light: #ffffff;
+        --text-main: #333333;
+        --border-luxury: rgba(184, 134, 11, 0.15);
+        --luxury-ease: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    body {
+        background: #fffcf5; /* لون أساسي فاتح */
+        margin: 0;
+        color: var(--text-main);
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .contact-wrapper {
+        padding: 160px 5% 100px;
+        min-height: 100vh;
+        /* تطبيق التدرج الذهبي الخفيف في الخلفية */
+        background: radial-gradient(circle at top, #ffffff 0%, #f9f1e0 70%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .section-title {
+        text-align: center;
+        margin-bottom: 80px;
+    }
+
+    .section-title h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(35px, 5vw, 65px);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin: 0;
+        color: #222; /* لون داكن للعنوان ليبرز فوق الفاتح */
+    }
+
+    .section-title h1 span {
+        background: var(--gold-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .section-title p {
+        color: var(--accent-gold);
+        刻tter-spacing: 4px;
+        text-transform: uppercase;
+        font-size: 12px;
+        margin-top: 15px;
+        font-weight: 600;
+    }
+
+    /* --- Contact Grid --- */
+    .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 50px;
+        max-width: 1200px;
+        width: 100%;
+    }
+
+    /* Luxury Card Design - Modified for Light Theme */
+    .luxury-card {
+        background: var(--card-light);
+        border: 1px solid var(--border-luxury);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.6s var(--luxury-ease);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05); /* ظل ناعم جداً */
+    }
+
+    .luxury-card:hover {
+        border-color: var(--accent-gold);
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(197, 160, 89, 0.15);
+    }
+
+    .card-inner {
+        padding: 50px;
+        position: relative;
+        z-index: 5;
+    }
+
+    /* Contact Info Items */
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .info-icon {
+        width: 45px;
+        height: 45px;
+        border: 1px solid var(--accent-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-gold);
+        font-size: 18px;
+        flex-shrink: 0;
+        transition: 0.4s;
+    }
+
+    .info-item:hover .info-icon {
+        background: var(--accent-gold);
+        color: #fff;
+    }
+
+    .info-text h4 { 
+        margin: 0; 
+        font-size: 14px; 
+        text-transform: uppercase; 
+        letter-spacing: 2px; 
+        color: var(--accent-gold); 
+    }
+    
+    .info-text p, .info-text p a { 
+        margin: 8px 0 0; 
+        color: #555; 
+        font-size: 15px; 
+        line-height: 1.6;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+    
+    .info-text p a:hover { color: var(--accent-gold); }
+
+    /* Luxury Form */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+
+    .contact-form input, .contact-form textarea {
+        width: 100%;
+        padding: 18px 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        color: #333;
+        margin-bottom: 30px;
+        outline: none;
+        transition: 0.4s;
+        font-size: 14px;
+        font-family: inherit;
+    }
+
+    .contact-form input:focus, .contact-form textarea:focus {
+        border-bottom-color: var(--accent-gold);
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 20px;
+        background: #fff;
+        color: var(--accent-gold);
+        border: 1px solid var(--accent-gold);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.5s var(--luxury-ease);
+        font-size: 12px;
+        margin-top: 20px;
+    }
+
+    .btn-submit:hover {
+        background: var(--accent-gold);
+        color: #fff;
+        transform: translateY(-3px);
+    }
+
+    /* Map Styling */
+    .map-container {
+        margin-top: 40px;
+        border: 1px solid var(--border-luxury);
+        filter: sepia(0.2) contrast(0.9); /* لمسة دافئة للملف بدل اللون الداكن */
+        opacity: 0.8;
+        transition: 0.6s;
+        height: 200px;
+    }
+    
+    .map-container:hover {
+        opacity: 1;
+        filter: none;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 992px) {
+        .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+        .card-inner { padding: 40px 30px; }
+    }
+
+    @media (max-width: 600px) {
+        .form-row { grid-template-columns: 1fr; gap: 0; }
+        .section-title h1 { font-size: 32px; }
+    }
+</style>
+
+<div class="contact-wrapper">
+    <div class="section-title">
+        <h1>Connect with <span>Lusso</span></h1>
+        <p>Your journey to excellence starts here</p>
+    </div>
+
+    <div class="contact-grid">
+        <div class="luxury-card">
+            <div class="card-inner">
+                <h3 style="font-family: 'Playfair Display'; font-size: 24px; color: #222; margin-top: 0; margin-bottom: 40px; letter-spacing: 1px;">Contact Details</h3>
+                
+                <div class="info-item">
+                    <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                    <div class="info-text">
+                        <h4>Correspondence</h4>
+                        <p>iceclubstore44@gmail.com</p>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon"><i class="fas fa-phone"></i></div>
+                    <div class="info-text">
+                        <h4>Direct Line</h4>
+                        <p>+201555530258</p>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="info-text">
+                        <h4>Atelier Location</h4>
+                        <p>
+                            <a href="#" target="_blank">
+                                ٦ أكتوبر - الحي السابع - شارع المدينه المنوره - سنتر المختار - الدور الاول
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="map-container">
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3455.9525164893764!2d29.9576!3d29.9744!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjk°NTgnMjcuOCJOIDI5°NTcnMjcuNCJF!5e0!3m2!1sen!2seg!4v1620000000000!5m2!1sen!2seg" 
+                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+
+        <div class="luxury-card">
+            <div class="card-inner">
+                <h3 style="font-family: 'Playfair Display'; font-size: 24px; color: #222; margin-top: 0; margin-bottom: 40px; letter-spacing: 1px;">Send an Inquiry</h3>
+                
+                <form class="contact-form" method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="form-row">
+                        <input type="text" name="name" placeholder="Full Name" required>
+                        <input type="email" name="email" placeholder="Email Address" required>
+                    </div>
+
+                    <div class="form-row">
+                        <input type="tel" name="phone" placeholder="Phone Number" required>
+                        <input type="text" name="subject" placeholder="Subject of Interest">
+                    </div>
+
+                    <textarea name="message" rows="5" placeholder="Your Message or Inquiry..." required></textarea>
+                    
+                    <button type="submit" class="btn-submit">Dispatch Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@100;300;400;600&family=Amiri:wght@400;700&family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<style>
+    :root {
+        --accent-gold: #c5a059;
+        --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
+        --deep-dark: #070707;
+        --card-dark: #111111;
+        --soft-white: #ffffff;
+        --luxury-ease: cubic-bezier(0.23, 1, 0.32, 1);
+        --transition-smooth: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body {
+        background-color: var(--deep-dark);
+        color: var(--soft-white);
+        font-family: 'Montserrat', sans-serif;
+        line-height: 1.6;
+        overflow-x: hidden;
+        margin: 0;
+    }
+
+    /* --- Cinematic Hero Section --- */
+    .hero-section {
+        height: 110vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        perspective: 1000px;
+    }
+
+    .hero-bg-wrapper {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1;
+    }
+
+    .hero-bg-image {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        opacity: 0.5;
+        filter: contrast(1.1) brightness(0.8);
+        transform: scale(1.1);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 10;
+        padding-left: 10%;
+        width: 100%;
+    }
+
+    .hero-title-main {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(60px, 12vw, 180px);
+        line-height: 0.85;
+        font-weight: 700;
+        margin: 0;
+        text-transform: uppercase;
+        pointer-events: none;
+    }
+
+    .hero-title-main span {
+        display: block;
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+    }
+
+    .hero-title-main .gold-text {
+        color: var(--soft-white);
+        -webkit-text-stroke: 0;
+        background: var(--gold-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-left: 10vw;
+    }
+
+    .hero-description {
+        max-width: 450px;
+        margin: 40px 0;
+        font-weight: 200;
+        letter-spacing: 2px;
+        font-size: 16px;
+        border-left: 2px solid var(--accent-gold);
+        padding-left: 25px;
+        color: #aaa;
+    }
+
+    .magnetic-btn-wrap {
+        display: inline-block;
+        padding: 20px;
+    }
+
+    .btn-lusso-v2 {
+        width: 180px; height: 180px;
+        border-radius: 50%;
+        border: 1px solid var(--accent-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        font-size: 12px;
+        color: #fff;
+        text-decoration: none;
+        transition: var(--transition-smooth);
+        position: relative;
+        background: transparent;
+        overflow: hidden;
+        text-align: center;
+    }
+
+    .btn-lusso-v2::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: var(--accent-gold); transform: scale(0);
+        transition: transform 0.6s var(--luxury-ease);
+        z-index: -1; border-radius: 50%;
+    }
+
+    .btn-lusso-v2:hover::before { transform: scale(1); }
+    .btn-lusso-v2:hover { color: #000; border-color: transparent; }
+
+    #luxury-canvas {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 2; pointer-events: none; opacity: 0.6;
+    }
+
+    .bg-text-deco {
+        position: absolute; font-family: 'Playfair Display';
+        font-size: 40vw; color: rgba(255,255,255,0.02);
+        z-index: 0; pointer-events: none; white-space: nowrap;
+        top: 50%; left: 50%; transform: translate(-50%, -50%);
+    }
+
+    /* --- Professional Re-designed Showcase Section (تعديلات الخط العربي) --- */
+    .new-showcase {
+        padding: 160px 5%;
+        background: #e5e1e1;
+        color: black;
+        position: relative;
+    }
+
+    .section-meta {
+        text-align: center;
+        margin-bottom: 80px;
+    }
+
+    .section-meta .label {
+        color: var(--accent-gold);
+        text-transform: uppercase;
+        letter-spacing: 8px;
+        font-size: 12px;
+        display: block;
+        margin-bottom: 20px;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .section-meta h2 {
+        font-family: 'Amiri', serif; /* خط عربي كلاسيكي فاخر */
+        font-size: clamp(40px, 6vw, 75px);
+        font-weight: 700;
+        margin: 0;
+        color: #1a1a1a;
+        line-height: 1.2;
+    }
+
+    /* Bento Grid System */
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(2, 400px);
+        gap: 20px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .bento-item {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+        cursor: pointer;
+    }
+
+    .bento-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 1.5s var(--luxury-ease);
+        filter: grayscale(20%);
+    }
+
+    .bento-item:hover img {
+        transform: scale(1.05);
+        filter: grayscale(0%);
+    }
+
+    .item-large { grid-column: span 2; grid-row: span 2; }
+    .item-tall { grid-column: span 1; grid-row: span 2; }
+    .item-wide { grid-column: span 1; grid-row: span 1; }
+
+    .item-overlay {
+        position: absolute;
+        bottom: 0; left: 0; width: 100%;
+        padding: 40px;
+        background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        z-index: 2;
+    }
+
+    .item-category {
+        font-family: 'Cairo', sans-serif;
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--accent-gold);
+        margin-bottom: 8px;
+        display: block;
+        font-weight: 600;
+    }
+
+    .item-title {
+        font-family: 'Amiri', serif; /* خط عربي كلاسيكي للعناوين داخل الكروت */
+        font-size: 32px;
+        margin: 0;
+        color: #fff;
+        line-height: 1.3;
+    }
+
+    .item-link {
+        margin-top: 15px;
+        display: inline-flex;
+        align-items: center;
+        gap: 15px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 12px;
+        font-weight: 400;
+        color: #fff;
+        text-decoration: none;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: 0.5s ease;
+    }
+
+    .bento-item:hover .item-link {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .item-link::after {
+        content: '';
+        width: 30px;
+        height: 1px;
+        background: var(--accent-gold);
+        transition: 0.4s;
+    }
+
+    .bento-item:hover .item-link::after {
+        width: 50px;
+    }
+
+    .luxury-badge {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        padding: 8px 15px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        font-size: 10px;
+        letter-spacing: 2px;
+        z-index: 3;
+        color: #fff;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    @media (max-width: 1024px) {
+        .bento-grid {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto;
+        }
+        .item-large, .item-tall, .item-wide {
+            grid-column: span 2;
+            height: 450px;
+        }
+    }
+</style>
+
+<section class="hero-section">
+    <div class="bg-text-deco">LUSSO</div>
+    <div class="hero-bg-wrapper">
+        <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920&auto=format&fit=crop" class="hero-bg-image" id="heroImage">
+    </div>
+    <canvas id="luxury-canvas"></canvas>
+    
+    <div class="hero-content">
+        <h1 class="hero-title-main">
+            <span>The New</span>
+            <div class="gold-text">Standard</div>
+            <span>Of Living</span>
+        </h1>
+        
+        <p class="hero-description" dir="rtl">
+            نحن لا نصنع الأثاث، نحن نصيغ مقتنيات فنية تمنح منزلك هوية فريدة تجمع بين أصالة الماضي وجموح المستقبل.
+        </p>
+
+        <div class="magnetic-btn-wrap">
+            <a href="{% url 'shop' %}" class="btn-lusso-v2">Explore<br>Collection</a>
+        </div>
+    </div>
+</section>
+
+<section class="new-showcase">
+    <div class="section-meta" dir="rtl">
+        <span class="label">Curated Selection</span>
+        <h2>مجموعاتنا المختارة بعناية</h2>
+    </div>
+
+    <div class="bento-grid">
+        <div class="bento-item item-large" onclick="location.href='/shop/ghrf-lsfrh/';">
+            <div class="luxury-badge">EDITORIAL</div>
+            <img src="{{ MEDIA_URL }}images/v.png" alt="Living">
+            <div class="item-overlay" dir="rtl">
+                <span class="item-category">المعيشة العصرية</span>
+                <h3 class="item-title">مجموعة صالونات "ميلانو" 2026</h3>
+                <a href="#" class="item-link">استكشف التفاصيل</a>
+            </div>
+        </div>
+
+        <div class="bento-item item-tall" onclick="location.href='{% url 'shop' %}?category=bedroom';">
+            <img src="{{ MEDIA_URL }}images/G.png" alt="Bedroom">
+            <div class="item-overlay" dir="rtl">
+                <span class="item-category">النوم الملكي</span>
+                <h3 class="item-title">أجنحة النوم الفاخرة</h3>
+                <a href="#" class="item-link">رؤية المجموعة</a>
+            </div>
+        </div>
+
+        <div class="bento-item item-wide" onclick="location.href='{% url 'shop' %}?category=office';">
+            <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=800" alt="Office">
+            <div class="item-overlay" dir="rtl">
+                <span class="item-category">مساحات العمل</span>
+                <h3 class="item-title" style="font-size: 24px;">مكاتب تنفيذية</h3>
+            </div>
+        </div>
+
+        <div class="bento-item item-wide" onclick="location.href='{% url 'shop' %}?category=decor';">
+            <img src="{{ MEDIA_URL }}images/H.webp" alt="Living">
+            <div class="item-overlay" dir="rtl">
+                <span class="item-category">الإكسسوارات</span>
+                <h3 class="item-title" style="font-size: 24px;">قطع فنية مختارة</h3>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // 1. Hero Parallax Effect
+    document.addEventListener('mousemove', (e) => {
+        const { clientX, clientY } = e;
+        const xPos = (clientX / window.innerWidth - 0.5) * 30;
+        const yPos = (clientY / window.innerHeight - 0.5) * 30;
+
+        gsap.to('#heroImage', { duration: 1, x: xPos, y: yPos, ease: "power2.out" });
+        gsap.to('.hero-title-main', { duration: 1.5, x: -xPos * 1.5, y: -yPos * 1.5, ease: "power3.out" });
+    });
+
+    // 2. Particles Engine
+    const canvas = document.getElementById('luxury-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2;
+            this.speedX = Math.random() * 0.5 - 0.25;
+            this.speedY = Math.random() * 0.5 - 0.25;
+            this.opacity = Math.random();
+        }
+        update() {
+            this.x += this.speedX; this.y += this.speedY;
+            if (this.opacity > 0) this.opacity -= 0.001;
+        }
+        draw() {
+            ctx.fillStyle = `rgba(197, 160, 89, ${this.opacity})`;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+    function initParticles() { for (let i = 0; i < 150; i++) particles.push(new Particle()); }
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach((p, i) => { p.update(); p.draw(); if (p.opacity <= 0) particles[i] = new Particle(); });
+        requestAnimationFrame(animate);
+    }
+    window.addEventListener('resize', resize);
+    resize(); initParticles(); animate();
+
+    // 3. Scroll Reveal for Bento Grid
+    gsap.registerPlugin(ScrollTrigger);
+    
+    gsap.utils.toArray(".bento-item").forEach((item, i) => {
+        gsap.from(item, {
+            scrollTrigger: {
+                trigger: item,
+                start: "top 90%",
+            },
+            y: 50,
+            opacity: 0,
+            duration: 1,
+            delay: i * 0.1,
+            ease: "expo.out"
+        });
+    });
+</script>
+
+{% endblock %}

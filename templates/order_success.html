@@ -1,0 +1,244 @@
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZH9JG248D6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZH9JG248D6');
+</script>
+
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    :root {
+        --accent-gold: #b8860b;
+        --luxury-bg: #fffcf5;
+        --card-white: #ffffff;
+        --text-main: #1a1a1a;
+        --text-dim: #666666;
+        --border-luxury: rgba(184, 134, 11, 0.15);
+        --luxury-ease: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .success-wrapper {
+        padding: 160px 5% 100px;
+        background: var(--luxury-bg);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--text-main);
+    }
+
+    .success-container-outer {
+        position: relative;
+        max-width: 650px;
+        width: 100%;
+        background: var(--card-white);
+        border: 1px solid var(--border-luxury);
+        box-shadow: 0 40px 100px rgba(184, 134, 11, 0.05);
+        z-index: 10;
+    }
+
+    .success-container {
+        position: relative;
+        z-index: 5;
+        width: 100%;
+        padding: 70px 40px;
+        text-align: center;
+    }
+
+    .success-icon {
+        width: 90px;
+        height: 90px;
+        background: #fff;
+        border: 1px solid var(--accent-gold);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 35px;
+        font-size: 2rem;
+        color: var(--accent-gold);
+        animation: scaleIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    @keyframes scaleIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .success-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 400;
+        margin-bottom: 20px;
+        letter-spacing: 1px;
+    }
+
+    .order-id {
+        display: inline-block;
+        background: #fdfaf3;
+        padding: 10px 25px;
+        border: 1px solid var(--border-luxury);
+        color: var(--text-main);
+        font-weight: 600;
+        margin-bottom: 35px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .success-message {
+        color: var(--text-dim);
+        line-height: 1.8;
+        margin-bottom: 45px;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .info-card {
+        background: #fdfaf3;
+        padding: 30px;
+        border: 1px solid var(--border-luxury);
+        margin-bottom: 45px;
+        text-align: left;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        font-size: 0.85rem;
+        gap: 15px;
+    }
+
+    .info-label { 
+        text-transform: uppercase; 
+        letter-spacing: 2px; 
+        color: var(--accent-gold); 
+        font-weight: 700;
+        font-size: 10px;
+    }
+    
+    .info-value { font-weight: 500; color: var(--text-main); text-align: right; }
+
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .btn-continue {
+        background: var(--text-main);
+        color: #fff;
+        padding: 22px;
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        transition: var(--luxury-ease);
+        border: 1px solid var(--text-main);
+    }
+
+    .btn-continue:hover {
+        background: transparent;
+        color: var(--text-main);
+        transform: translateY(-5px);
+    }
+
+    .footer-note {
+        margin-top: 25px;
+        color: var(--text-dim);
+        font-size: 0.75rem;
+        font-style: italic;
+        letter-spacing: 1px;
+    }
+
+    @media (max-width: 600px) {
+        .success-wrapper { padding-top: 130px; }
+        .success-container { padding: 50px 25px; }
+        .info-item { flex-direction: column; gap: 5px; }
+        .info-value { text-align: left; font-size: 0.9rem; }
+    }
+</style>
+
+<div class="success-wrapper">
+    <div class="success-container-outer animate__animated animate__fadeInUp">
+        <div class="success-container">
+            
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            
+            <h1 class="success-title">Thank <span style="color: var(--accent-gold);">You.</span></h1>
+            
+            <div class="order-id">Reference: #LSS-{{ order.id }}</div>
+
+            <p class="success-message">
+                Dear <strong>{{ order.name }}</strong>, <br>
+                Your acquisition has been registered successfully. Our artisans are now preparing your selection for delivery.
+            </p>
+
+            <div class="info-card">
+                <div class="info-item">
+                    <span class="info-label">Destination</span>
+                    <span class="info-value">{{ order.governorate }}, {{ order.address }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Contact</span>
+                    <span class="info-value">{{ order.phone }}</span>
+                </div>
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-luxury);" class="info-item">
+                    <span class="info-label">Investment Total</span>
+                    <span class="info-value" style="color: var(--accent-gold); font-family: 'Playfair Display', serif; font-size: 1.5rem;">{{ order.total_price|floatformat:0 }} LE</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="{% url 'shop' %}" class="btn-continue">Return to Collection</a>
+                <p class="footer-note">
+                    A confirmation dossier has been sent to {{ order.email }}.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+  const orderId = '{{ order.id }}';
+  const totalPrice = {{ order.total_price|floatformat:2 }};
+  const hasTracked = sessionStorage.getItem('tracked_purchase_' + orderId);
+
+  if (!hasTracked) {
+      if (typeof fbq !== 'undefined') {
+          fbq('track', 'Purchase', {
+              value: totalPrice,
+              currency: 'EGP',
+              content_ids: [orderId], 
+              content_type: 'product',
+              em: '{{ order.email|lower }}'.trim(),
+              ph: '{{ order.phone }}'.trim(),
+              external_id: orderId 
+          }, {
+              eventID: orderId 
+          });
+      }
+
+      if (typeof gtag !== 'undefined') {
+          gtag('event', 'purchase', {
+              transaction_id: orderId,
+              value: totalPrice,
+              currency: 'EGP',
+              items: [{
+                item_id: orderId,
+                item_name: "Lusso Selection"
+              }]
+          });
+      }
+      sessionStorage.setItem('tracked_purchase_' + orderId, 'true');
+  }
+</script>
+{% endblock %}

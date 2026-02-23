@@ -1,0 +1,389 @@
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZH9JG248D6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZH9JG248D6');
+</script>
+
+{% extends 'base.html' %}
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --accent-gold: #b8860b;
+        --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
+        --light-gold-bg: radial-gradient(circle at top, #ffffff 0%, #f9f1e0 100%);
+        --card-white: #ffffff;
+        --text-main: #1a1a1a;
+        --text-dim: #666666;
+        --border-luxury: rgba(184, 134, 11, 0.15);
+        --luxury-ease: cubic-bezier(0.23, 1, 0.32, 1);
+        --transition-smooth: all 0.6s var(--luxury-ease);
+        
+        /* تعريف الخطوط الجديدة */
+        --font-arabic-heading: 'Amiri', serif;
+        --font-arabic-body: 'IBM Plex Sans Arabic', sans-serif;
+        --font-english-heading: 'Playfair Display', serif;
+    }
+
+    body { 
+        margin: 0; 
+        background: #fffcf5; 
+        color: var(--text-main); 
+        font-family: var(--font-arabic-body); /* الخط الأساسي */
+        overflow-x: hidden; 
+    }
+
+    .shop-wrapper { 
+        padding: 160px 5% 100px; 
+        background: var(--light-gold-bg);
+        min-height: 100vh; 
+        box-sizing: border-box; 
+    }
+    
+    .shop-header { text-align: center; margin-bottom: 60px; } 
+    .shop-header h1 { 
+        font-family: var(--font-english-heading);
+        font-size: clamp(2.5rem, 6vw, 4.5rem); 
+        font-weight: 700; 
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #000;
+    }
+    .shop-header h1 span {
+        background: var(--gold-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .shop-header p {
+        color: var(--accent-gold);
+        font-family: var(--font-arabic-body);
+        letter-spacing: 4px;
+        font-size: 14px;
+        text-transform: uppercase;
+        margin-top: 10px;
+        font-weight: 600;
+    }
+
+    /* --- Category Filter --- */
+    .category-filter { 
+        display: flex; justify-content: center; gap: 15px; margin-bottom: 60px; flex-wrap: wrap; 
+    }
+    
+    .cat-link, .drop-btn { 
+        padding: 12px 30px; border: 1px solid var(--border-luxury); 
+        color: var(--text-main); text-decoration: none; transition: var(--transition-smooth); 
+        background: var(--card-white); cursor: pointer;
+        font-size: 13px; letter-spacing: 1px;
+        font-family: var(--font-arabic-body);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+    }
+    
+    .cat-link.active, .cat-link:hover, .drop-btn:hover, .drop-btn.active-btn { 
+        background: var(--accent-gold); color: #fff; border-color: var(--accent-gold); transform: translateY(-3px); 
+    }
+
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-content {
+        display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); 
+        background: #fff; min-width: 220px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+        z-index: 100; border: 1px solid var(--border-luxury); margin-top: 15px; 
+    }
+    .dropdown-content.show { display: block; animation: dropFade 0.4s var(--luxury-ease); }
+    .dropdown-content a {
+        color: var(--text-dim); padding: 15px 20px; text-decoration: none; display: block;
+        transition: 0.3s; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: center;
+        font-size: 14px; font-family: var(--font-arabic-body);
+    }
+    .dropdown-content a:hover { background: #fdfaf3; color: var(--accent-gold); }
+
+    /* --- Product Grid & Cards --- */
+    .product-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
+        gap: 50px; 
+        max-width: 1600px; 
+        margin: 0 auto; 
+    }
+
+    .product-card { 
+        background: var(--card-white);
+        transition: var(--transition-smooth); 
+        display: flex; flex-direction: column; position: relative; 
+        border: 1px solid var(--border-luxury);
+        padding-bottom: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+
+    .product-card:hover { 
+        transform: translateY(-10px); 
+        border-color: var(--accent-gold);
+        box-shadow: 0 20px 40px rgba(184, 134, 11, 0.1);
+    }
+
+    .badge { 
+        position: absolute; top: 20px; padding: 6px 15px; font-size: 10px; 
+        font-weight: 600; z-index: 10; text-transform: uppercase; letter-spacing: 1px;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .discount-badge { right: 20px; background: #a00000; color: white; }
+    .new-badge { left: 20px; background: var(--accent-gold); color: #fff; }
+    
+    .sold-out-overlay { 
+        position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); 
+        background: rgba(255, 255, 255, 0.9); color: #a00000; padding: 12px 25px; 
+        border: 1px solid #a00000; font-size: 14px; letter-spacing: 2px;
+        font-weight: 700; z-index: 15; display: none; pointer-events: none;
+        font-family: var(--font-arabic-body);
+    }
+
+    .product-card__image-wrap { 
+        width: 100%; aspect-ratio: 4/5; overflow: hidden; 
+        margin-bottom: 25px; background: #f9f9f9; position: relative; 
+    }
+
+    .main-product-img { 
+        width: 100%; height: 100%; object-fit: cover; 
+        transition: transform 1.5s var(--luxury-ease), opacity 0.5s; 
+    }
+    .product-card:hover .main-product-img { transform: scale(1.05); }
+
+    .is-sold-out img { opacity: 0.4; filter: grayscale(1); }
+
+    .image-nav-arrows {
+        position: absolute; top: 50%; width: 100%; transform: translateY(-50%);
+        display: none; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5;
+    }
+    .nav-arrow {
+        background: rgba(255,255,255,0.8); color: #000; border: none; 
+        width: 40px; height: 40px; cursor: pointer; pointer-events: auto;
+        display: flex; align-items: center; justify-content: center; transition: 0.3s;
+        backdrop-filter: blur(5px); font-size: 18px; border-radius: 50%;
+    }
+    .nav-arrow:hover { background: var(--accent-gold); color: #fff; }
+
+    .color-options { display: flex; gap: 12px; margin-bottom: 20px; justify-content: center; }
+    .color-dot { 
+        width: 18px; height: 18px; border-radius: 50%; cursor: pointer; 
+        border: 1px solid rgba(0,0,0,0.1); transition: 0.4s var(--luxury-ease); 
+    }
+    .color-dot.active { transform: scale(1.5); border-color: var(--accent-gold); box-shadow: 0 0 10px rgba(184, 134, 11, 0.2); }
+
+    .product-card__name { 
+        font-family: var(--font-arabic-heading); /* خط أميري فخم للعنوان */
+        font-size: 24px; 
+        font-weight: 700; margin: 0 0 10px; text-align: center; color: #1a1a1a;
+    }
+
+    .current-price { 
+        color: #000; font-weight: 600; font-size: 1.2rem; letter-spacing: 1px; 
+        font-family: 'Montserrat', sans-serif; /* للأرقام */
+    }
+    .old-price { 
+        text-decoration: line-through; color: var(--text-dim); margin-left: 10px; font-size: 0.9rem;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .product-card__btn { 
+        margin: 25px 20px 0; padding: 15px; border: 1px solid var(--accent-gold);
+        background: transparent; color: var(--accent-gold); text-decoration: none; 
+        font-size: 14px; font-weight: 600; text-align: center; 
+        transition: var(--transition-smooth); 
+        font-family: var(--font-arabic-body);
+    }
+    .product-card__btn:hover { background: var(--accent-gold); color: #fff; }
+    .product-card__btn.btn-disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; border-color: #ccc; color: #ccc; }
+
+@media (max-width: 768px) {
+        .product-grid { 
+            grid-template-columns: repeat(1, 1fr); 
+            gap: 30px; 
+            padding: 0 1.5rem; 
+        }
+        
+        .product-card__name {
+            font-size: 1.3rem;
+        }
+
+        .shop-header h1 { 
+            font-size: 1.8rem; 
+        }
+        
+        .product-card__btn {
+            margin: 15px 10px 0;
+            padding: 10px;
+            font-size: 13px;
+        }
+    }
+
+    @keyframes dropFade { 
+        from { opacity: 0; transform: translate(-50%, -20px); } 
+        to { opacity: 1; transform: translate(-50%, 0); } 
+    }
+</style>
+
+<section class="shop-wrapper">
+    <header class="shop-header">
+        <h1>Lusso <span>Catalog</span></h1>
+        <p>فن الحياة الراقية</p>
+    </header>
+
+    <nav class="category-filter">
+        <a href="{% url 'shop' %}" class="cat-link {% if not selected_category %}active{% endif %}">كل المجموعات</a>
+        <div class="dropdown">
+            <button class="drop-btn {% if selected_category %}active-btn{% endif %}" onclick="toggleDropdown(event)">
+                الأقسام {% if selected_category %}: {{ selected_category.name }}{% endif %} ▾
+            </button>
+            <div class="dropdown-content" id="myDropdown">
+                {% for cat in categories %}
+                    <a href="{% url 'shop_by_category' cat.slug %}">{{ cat.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="product-grid">
+       {% for product in products %}
+        <article class="product-card" id="prod-{{ product.id }}">
+            <div class="sold-out-overlay" id="ovl-{{ product.id }}">غير متوفر حالياً</div>
+            
+            {% if product.discount_percentage > 0 %}
+                <div class="badge discount-badge">-{{ product.discount_percentage }}%</div>
+            {% endif %}
+
+            {% if product.is_new %}
+                <div class="badge new-badge">جديد</div>
+            {% endif %}
+
+            <div class="product-card__image-wrap" id="img-wrap-{{ product.id }}">
+                <img src="{{ product.main_image.url }}" class="main-product-img" id="img-{{ product.id }}" loading="lazy">
+                
+                <div class="image-nav-arrows" id="arrows-{{ product.id }}">
+                    <button class="nav-arrow prev" onclick="changeExtraImage('{{ product.id }}', -1, event)">❮</button>
+                    <button class="nav-arrow next" onclick="changeExtraImage('{{ product.id }}', 1, event)">❯</button>
+                </div>
+            </div>
+
+            <div class="color-options">
+                {% for v in product.variants.all|dictsortreversed:"total_variant_stock" %}
+                <div class="color-dot {% if v.total_variant_stock == 0 %}is-sold-out-dot{% endif %}" 
+                     style="background: {{ v.color_code }};" 
+                     data-image="{{ v.variant_image.url }}" 
+                     data-extra-images="{% for extra in v.additional_images.all %}{{ extra.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                     data-variant-stock="{{ v.total_variant_stock }}" 
+                     onclick="updateVariant(this, '{{ product.id }}')">
+                </div>
+                {% endfor %}
+            </div>
+
+            <h3 class="product-card__name">{{ product.name }}</h3>
+            
+            <div style="text-align:center;">
+                <span class="current-price">{{ product.discount_price|default:product.price|floatformat:0 }} LE</span>
+                {% if product.discount_price %}<span class="old-price">{{ product.price|floatformat:0 }} LE</span>{% endif %}
+            </div>
+
+            <a href="{% url 'product_detail' product.id %}" class="product-card__btn" id="btn-{{ product.id }}">عرض التفاصيل</a>
+        </article>
+        {% empty %}
+        <div class="empty-catalog" style="grid-column:1/-1; text-align:center; padding:100px; border:1px solid var(--border-luxury); background: #fff;">
+            <h2 style="font-family: var(--font-arabic-heading); color:var(--accent-gold); font-size: 32px;">قريباً</h2>
+            <p style="font-size:14px; color: var(--text-dim);">يتم حالياً تجهيز مجموعتنا الجديدة من أجلك.</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<script>
+    let productImagesMap = {};
+
+    function updateVariant(el, productId) {
+        const card = document.getElementById('prod-' + productId),
+              img = document.getElementById('img-' + productId),
+              imgWrap = document.getElementById('img-wrap-' + productId),
+              ovl = document.getElementById('ovl-' + productId),
+              btn = document.getElementById('btn-' + productId),
+              arrows = document.getElementById('arrows-' + productId),
+              variantStock = parseInt(el.dataset.variantStock);
+
+        const mainImg = el.dataset.image;
+        const extraImgs = el.dataset.extraImages ? el.dataset.extraImages.split(',') : [];
+        const allImages = [mainImg, ...extraImgs].filter(url => url.trim() !== "");
+        
+        productImagesMap[productId] = {
+            images: allImages,
+            currentIndex: 0
+        };
+
+        img.style.opacity = '0';
+        setTimeout(() => { 
+            img.src = mainImg; 
+            img.style.opacity = '1'; 
+        }, 300);
+
+        if(arrows) {
+            arrows.style.display = allImages.length > 1 ? 'flex' : 'none';
+        }
+
+        card.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+        el.classList.add('active');
+
+        if (variantStock === 0) {
+            imgWrap.classList.add('is-sold-out');
+            ovl.style.display = 'block';
+            btn.classList.add('btn-disabled');
+            btn.innerText = 'غير متوفر حالياً';
+        } else {
+            imgWrap.classList.remove('is-sold-out');
+            ovl.style.display = 'none';
+            btn.classList.remove('btn-disabled');
+            btn.innerText = 'عرض التفاصيل';
+        }
+    }
+
+    function changeExtraImage(productId, direction, event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const data = productImagesMap[productId];
+        if (!data || data.images.length <= 1) return;
+
+        data.currentIndex += direction;
+        if (data.currentIndex >= data.images.length) data.currentIndex = 0;
+        if (data.currentIndex < 0) data.currentIndex = data.images.length - 1;
+
+        const img = document.getElementById('img-' + productId);
+        img.style.opacity = '0.5';
+        setTimeout(() => {
+            img.src = data.images[data.currentIndex];
+            img.style.opacity = '1';
+        }, 150);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.product-card').forEach(c => {
+            const productId = c.id.replace('prod-', '');
+            let targetColor = Array.from(c.querySelectorAll('.color-dot')).find(d => parseInt(d.dataset.variantStock) > 0) || c.querySelector('.color-dot');
+            if (targetColor) updateVariant(targetColor, productId);
+        });
+    });
+
+    function toggleDropdown(event) {
+        event.stopPropagation();
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.drop-btn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
+            }
+        }
+    }
+</script>
+{% endblock %}

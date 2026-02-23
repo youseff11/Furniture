@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        /* الهوية البصرية لـ Lusso - النسخة الفاتحة */
+        --accent-gold: #b8860b;
+        --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
+        --light-gold-bg: radial-gradient(circle at top, #ffffff 0%, #f9f1e0 100%);
+        --card-white: #ffffff;
+        --text-main: #222222;
+        --text-dim: #555555;
+        --luxury-ease: cubic-bezier(0.23, 1, 0.32, 1);
+        --border-luxury: rgba(184, 134, 11, 0.15);
+        /* الخطوط */
+        --font-ar-heading: 'Amiri', serif;
+        --font-ar-body: 'IBM Plex Sans Arabic', sans-serif;
+        --font-en-heading: 'Playfair Display', serif;
+    }
+
+    body {
+        font-family: var(--font-ar-body);
+        background: #fffcf5;
+        color: var(--text-main);
+        line-height: 1.8;
+        margin: 0;
+    }
+
+    /* زر اللغة بستايل Lusso المحدث */
+    .lang-switch {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--accent-gold);
+        border: 1px solid var(--accent-gold);
+        padding: 12px 24px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--luxury-ease);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        font-family: var(--font-ar-body);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .lang-switch:hover { 
+        background: var(--accent-gold); 
+        color: #fff; 
+        transform: translateY(-5px); 
+    }
+
+    .about-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 180px 20px 100px;
+        min-height: 100vh;
+        background: var(--light-gold-bg);
+        transition: var(--luxury-ease);
+    }
+
+    /* وضع الـ RTL للعربية */
+    .about-container.rtl { 
+        direction: rtl; 
+        text-align: right; 
+    }
+    
+    .about-container.rtl h1, 
+    .about-container.rtl h2, 
+    .about-container.rtl h3,
+    .about-container.rtl .closing-statement { 
+        font-family: var(--font-ar-heading); 
+    }
+
+    .lang-switch.btn-rtl { right: auto; left: 40px; }
+
+    /* الهيدر */
+    .about-header { text-align: center; margin-bottom: 100px; }
+    .about-header h1 {
+        font-family: var(--font-en-heading);
+        font-size: clamp(2.5rem, 8vw, 4.5rem);
+        margin: 0;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+    .about-header h1 span {
+        background: var(--gold-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+        color: var(--accent-gold);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        font-size: 14px;
+        display: block;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+
+    /* قسم القصة - Story Section */
+    .story-section {
+        background: var(--card-white);
+        border: 1px solid var(--border-luxury);
+        margin-bottom: 80px;
+        position: relative;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+    }
+
+    .story-inner {
+        padding: 80px 40px;
+        text-align: center;
+    }
+
+    .story-inner h2 { 
+        font-family: var(--font-en-heading); 
+        color: #1a1a1a; 
+        font-size: 36px;
+        margin-bottom: 30px;
+    }
+
+    .story-inner p {
+        max-width: 800px;
+        margin: 0 auto 25px;
+        font-size: 1.15rem;
+        color: var(--text-dim);
+    }
+
+    /* كروت المعلومات */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 100px;
+    }
+
+    .info-card {
+        padding: 50px 30px;
+        border: 1px solid var(--border-luxury);
+        background: var(--card-white);
+        text-align: center;
+        transition: var(--luxury-ease);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.02);
+    }
+
+    .info-card:hover { 
+        border-color: var(--accent-gold); 
+        transform: translateY(-10px); 
+        box-shadow: 0 15px 35px rgba(184, 134, 11, 0.1);
+    }
+    .info-card i { font-size: 30px; color: var(--accent-gold); margin-bottom: 25px; }
+    .info-card h3 { font-family: var(--font-en-heading); font-size: 22px; color: #1a1a1a; margin-bottom: 15px; }
+    .info-card p { font-size: 1rem; color: var(--text-dim); }
+
+    .closing-statement {
+        text-align: center;
+        padding: 80px 20px;
+        border-top: 1px solid var(--border-luxury);
+        font-family: var(--font-en-heading);
+        font-size: 28px;
+        color: var(--accent-gold);
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .about-header h1 { font-size: 2.5rem; }
+        .story-inner { padding: 50px 20px; }
+        .lang-switch { bottom: 20px; right: 20px; padding: 10px 18px; }
+    }
+</style>
+
+<button class="lang-switch" id="lang-btn" onclick="toggleLanguage()">
+    <i class="fa-solid fa-globe"></i>
+    <span id="btn-text">English</span>
+</button>
+
+<div class="about-container rtl" id="content-area">
+    <header class="about-header">
+        <span class="subtitle" data-en="Our Legacy & Vision" data-ar="إرثنا ورؤيتنا">إرثنا ورؤيتنا</span>
+        <h1 data-en="The World of <span>Lusso</span>" data-ar="عالم <span>لوسو</span>">عالم <span>لوسو</span></h1>
+    </header>
+
+    <section class="story-section">
+        <div class="story-inner">
+            <h2 data-en="The Artisan Philosophy" data-ar="فلسفة الحرفية">فلسفة الحرفية</h2>
+            <p data-en="Lusso is not merely a store; it is a sanctuary for those who appreciate the finer details of modern elegance. We curate collections that balance contemporary trends with timeless comfort." 
+               data-ar="لوسو ليس مجرد متجر؛ إنه ملاذ لأولئك الذين يقدرون التفاصيل الدقيقة للأناقة الحديثة. نحن ننسق مجموعات توازن بين الصيحات المعاصرة والراحة الأبدية.">
+               لوسو ليس مجرد متجر؛ إنه ملاذ لأولئك الذين يقدرون التفاصيل الدقيقة للأناقة الحديثة. نحن ننسق مجموعات توازن بين الصيحات المعاصرة والراحة الأبدية.
+            </p>
+            <p data-en="We believe that true luxury is found in the <strong>experience of wearing</strong> perfection." 
+               data-ar="نحن نؤمن بأن الفخامة الحقيقية تكمن في <strong>تجربة ارتداء</strong> الإتقان.">
+               نحن نؤمن بأن الفخامة الحقيقية تكمن في <strong>تجربة ارتداء</strong> الإتقان.
+            </p>
+        </div>
+    </section>
+
+    <div class="info-grid">
+        <div class="info-card">
+            <i class="fa-regular fa-clock"></i>
+            <h3 data-en="Atelier Hours" data-ar="ساعات العمل">ساعات العمل</h3>
+            <p data-en="Available daily from <strong>4:00 PM to 12:00 AM</strong> to curate your bespoke orders." 
+               data-ar="متواجدون يومياً من <strong>4:00 عصراً حتى 12:00 منتصف الليل</strong> لتنسيق طلباتكم الخاصة.">
+                متواجدون يومياً من 4:00 عصراً حتى 12:00 منتصف الليل.
+            </p>
+        </div>
+        <div class="info-card">
+            <i class="fa-solid fa-crown"></i>
+            <h3 data-en="Premium Logistics" data-ar="خدمات التوصيل">خدمات التوصيل</h3>
+            <p data-en="Dispatched with utmost care to all governorates across the <strong>Arab Republic of Egypt</strong>." 
+               data-ar="يتم إرسال الشحنات بأقصى درجات العناية لجميع محافظات <strong>جمهورية مصر العربية</strong>.">
+                توصيل سريع وآمن لجميع محافظات الجمهورية.
+            </p>
+        </div>
+        <div class="info-card">
+            <i class="fa-solid fa-gem"></i>
+            <h3 data-en="Concierge Support" data-ar="دعم العملاء">دعم العملاء</h3>
+            <p data-en="Dedicated human assistance to ensure your journey with Lusso is seamless and prestigious." 
+               data-ar="مساعدة مخصصة لضمان أن تكون رحلتك مع لوسو سلسة وراقية تليق بكم.">
+                دعم فني مخصص لتجربة تسوق استثنائية.
+            </p>
+        </div>
+    </div>
+
+    <div class="closing-statement" data-en='"Excellence is not a skill, it is an attitude."' data-ar='"التميز ليس مهارة، بل هو نهج حياة"'>
+        "التميز ليس مهارة، بل هو نهج حياة"
+    </div>
+</div>
+
+<script>
+    function toggleLanguage() {
+        const container = document.getElementById('content-area');
+        const langBtn = document.getElementById('lang-btn');
+        const btnText = document.getElementById('btn-text');
+        const elements = document.querySelectorAll('[data-en]');
+        
+        container.classList.toggle('rtl');
+        langBtn.classList.toggle('btn-rtl');
+        
+        if (container.classList.contains('rtl')) {
+            elements.forEach(el => { el.innerHTML = el.getAttribute('data-ar'); });
+            btnText.innerText = 'English';
+        } else {
+            elements.forEach(el => { el.innerHTML = el.getAttribute('data-en'); });
+            btnText.innerText = 'العربية';
+        }
+    }
+</script>
+{% endblock %}

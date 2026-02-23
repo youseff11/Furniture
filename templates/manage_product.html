@@ -1,0 +1,191 @@
+{% extends 'base.html' %} {% load static %}
+{% block content %}
+<style>
+    :root { --primary-blue: #4fc3f7; --error-red: #ff5252; --border-color: rgba(255,255,255,0.08); }
+    .manage-container { padding: 100px 4% 50px; min-height: 100vh; color: #e0e0e0; font-family: 'Inter', sans-serif; }
+    .dashboard-card { background: rgba(15,25,30,0.85); backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; max-width: 1350px; margin: 0 auto; box-shadow: 0 40px 100px rgba(0,0,0,0.5); }
+    
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; gap: 15px; flex-wrap: wrap; }
+    .page-header h2 { font-size: 22px; font-weight: 700; background: linear-gradient(to right, #4fc3f7, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+    
+    .form-section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: var(--primary-blue); margin: 25px 0 15px; display: flex; align-items: center; gap: 10px; }
+    
+    .basic-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 15px; border: 1px solid var(--border-color); }
+    
+    input, textarea, select { width: 100%; background: #101c24!important; border: 1px solid #243447!important; border-radius: 8px; padding: 10px 12px; color: #fff!important; font-size: 14px; outline: none; transition: 0.3s; }
+    input:focus { border-color: var(--primary-blue)!important; }
+    
+    .field-wrapper label { display: block; font-size: 12px; color: #8899a6; margin-bottom: 6px; font-weight: 600; }
+    
+    .sizes-container { display: flex; flex-direction: column; gap: 8px; }
+    .size-entry { display: flex; gap: 5px; align-items: center; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 8px; }
+    
+    .variant-table { width: 100%; border-collapse: collapse; }
+    .variant-table th { background: rgba(79,195,247,0.1); padding: 12px; color: var(--primary-blue); text-transform: uppercase; font-size: 11px; text-align: left; }
+    .variant-table td { padding: 15px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+
+    /* تحويل الجدول لكروت في الموبايل */
+    @media (max-width: 850px) {
+        .manage-container { padding: 80px 15px 30px; }
+        .page-header { flex-direction: column; text-align: center; }
+        .basic-info-grid { grid-template-columns: 1fr; }
+        .basic-info-grid > div { grid-column: span 1 !important; }
+
+        /* إخفاء رأس الجدول */
+        .variant-table thead { display: none; }
+        .variant-table, .variant-table tbody, .variant-table tr, .variant-table td { display: block; width: 100%; }
+        .variant-row { background: rgba(255,255,255,0.03); border-radius: 15px; margin-bottom: 25px; border: 1px solid var(--border-color); padding: 10px; }
+        .variant-table td { border-bottom: none; padding: 10px 5px; position: relative; }
+        
+        /* إضافة عناوين توضيحية قبل كل حقل في الموبايل */
+        .variant-table td::before { content: attr(data-label); display: block; font-size: 10px; color: var(--primary-blue); text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+        
+        .size-input, .qty-input { width: 100% !important; }
+    }
+
+    .img-preview { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; border: 1px solid var(--primary-blue); margin: 5px 5px 0 0; }
+    .btn-save-main { background: var(--primary-blue); color: #0b141a; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 800; cursor: pointer; width: 100%; max-width: 400px; transition: 0.3s; }
+    .btn-save-main:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(79,195,247,0.4); }
+    .django-delete-checkbox { display: none; }
+    .add-size-btn { background: rgba(79,195,247,0.1); border: 1px dashed var(--primary-blue); color: var(--primary-blue); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 11px; margin-top: 5px; width: 100%; }
+</style>
+
+<div class="manage-container">
+    <div class="dashboard-card">
+        <div class="page-header">
+            <h2>{{ title }}</h2>
+            <button type="button" id="add-variant-row" style="background:rgba(79,195,247,0.1); color:var(--primary-blue); border:1px solid var(--primary-blue); padding:10px 20px; border-radius:50px; cursor:pointer; font-size:14px;"><i class="fas fa-plus"></i> Add Color</button>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="main-product-form">
+            {% csrf_token %}
+            <div class="form-section-title"><i class="fas fa-info-circle"></i> Basic Details</div>
+            <div class="basic-info-grid">
+                <div class="field-wrapper" style="grid-column:span 2;"><label>Product Name</label>{{ form.name }}</div>
+                <div class="field-wrapper"><label>Category</label>{{ form.category }}</div>
+                <div class="field-wrapper"><label>Price (EGP)</label>{{ form.price }}</div>
+                <div class="field-wrapper"><label>Discount Price</label>{{ form.discount_price }}</div>
+                <div class="field-wrapper" style="display:flex; align-items:center; gap:10px; padding-top:20px;">
+                    {{ form.is_new_arrival }} <label style="margin:0;">New Arrival</label>
+                </div>
+                <div class="field-wrapper" style="grid-column:span 3;"><label>Description</label>{{ form.description }}</div>
+            </div>
+
+            <div class="form-section-title" style="margin-top:40px;"><i class="fas fa-swatchbook"></i> Color & Stock</div>
+            <div class="variants-table-container">
+                {{ formset.management_form }}
+                <table class="variant-table" id="variants-table">
+                    <thead>
+                        <tr>
+                            <th width="25%">Color & Image</th>
+                            <th width="35%">Sizes & Qty</th>
+                            <th width="25%">Gallery</th>
+                            <th width="15%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="variant-tbody">
+                        {% for v_form in formset %}
+                        <tr class="variant-row">
+                            {% for hidden in v_form.hidden_fields %}{{ hidden }}{% endfor %}
+                            <td data-label="Color & Image">
+                                {{ v_form.color_name }}
+                                <div style="margin-top:8px;">{{ v_form.color_code }}</div>
+                                <div style="margin-top:8px;"><label style="font-size:10px; color:var(--primary-blue)">Main Image</label>{{ v_form.variant_image }}</div>
+                            </td>
+                            <td data-label="Sizes & Stock">
+                                <div class="sizes-container">
+                                    <div class="size-entry">
+                                        <input type="text" name="size_name_{{forloop.index0}}[]" class="size-input" placeholder="Size" style="width:70px!important">
+                                        <input type="number" name="size_qty_{{forloop.index0}}[]" class="qty-input" placeholder="Qty" style="width:80px!important">
+                                        <button type="button" onclick="removeSize(this)" style="color:var(--error-red); background:none; border:none; font-size:20px;">&times;</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="add-size-btn" onclick="addNewSizeBox(this)"><i class="fas fa-plus-circle"></i> ADD SIZE</button>
+                            </td>
+                            <td data-label="Extra Gallery">
+                                <input type="file" name="images_custom_{{forloop.index0}}" multiple onchange="previewImages(this)" style="font-size:11px;">
+                                <div class="preview-container"></div>
+                            </td>
+                            <td data-label="Control">
+                                {% if formset.can_delete %}<span class="django-delete-checkbox">{{ v_form.DELETE }}</span>{% endif %}
+                                <button type="button" onclick="removeVariantRow(this)" style="color:var(--error-red); background:none; border:none; cursor:pointer; font-size:13px;"><i class="fas fa-trash"></i> Remove</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="text-align:center; margin-top:40px;">
+                <button type="submit" class="btn-save-main">SAVE ALL CHANGES</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    /* JavaScript remains the same but with minor fixes for naming */
+    const updateRowIndices = () => {
+        const rows = document.querySelectorAll('.variant-row');
+        const total = document.getElementById('id_variants-TOTAL_FORMS');
+        if(total) total.value = rows.length;
+        rows.forEach((row, i) => {
+            row.querySelectorAll('input, select, textarea').forEach(el => {
+                if(el.name) {
+                    el.name = el.name.replace(/variants-\d+-/g, `variants-${i}-`);
+                    el.id = el.id.replace(/id_variants-\d+-/g, `id_variants-${i}-`);
+                }
+                if(el.name?.includes('size_name_')) el.name = `size_name_${i}[]`;
+                if(el.name?.includes('size_qty_')) el.name = `size_qty_${i}[]`;
+                if(el.name?.includes('images_custom_')) el.name = `images_custom_${i}`;
+            });
+            const btn = row.querySelector('.add-size-btn');
+            if(btn) btn.setAttribute('onclick', `addNewSizeBox(this, ${i})`);
+        });
+    };
+
+    function addNewSizeBox(btn, idx = null) {
+        const cont = btn.previousElementSibling;
+        const i = idx !== null ? idx : Array.from(document.querySelectorAll('.variant-row')).indexOf(btn.closest('.variant-row'));
+        const div = document.createElement('div'); div.className = 'size-entry';
+        div.innerHTML = `<input type="text" name="size_name_${i}[]" class="size-input" placeholder="Size" style="width:70px!important"><input type="number" name="size_qty_${i}[]" class="qty-input" placeholder="Qty" style="width:80px!important"><button type="button" onclick="removeSize(this)" style="color:var(--error-red); background:none; border:none; font-size:20px;">&times;</button>`;
+        cont.appendChild(div);
+    }
+
+    function removeSize(btn) { btn.parentElement.remove(); }
+
+    function previewImages(input) {
+        const cont = input.nextElementSibling; cont.innerHTML = '';
+        if(input.files) Array.from(input.files).forEach(f => {
+            const r = new FileReader(); r.onload = e => { const img = document.createElement('img'); img.src = e.target.result; img.className = 'img-preview'; cont.appendChild(img); }; r.readAsDataURL(f);
+        });
+    }
+
+    document.getElementById('add-variant-row').addEventListener('click', () => {
+        const tbody = document.getElementById('variant-tbody'), rows = document.querySelectorAll('.variant-row'), i = rows.length;
+        const newRow = rows[0].cloneNode(true); 
+        newRow.style.display = ''; 
+        newRow.classList.add('variant-row');
+        newRow.querySelectorAll('input').forEach(el => { 
+            if(el.type !== 'hidden') el.value = ''; 
+            else if(el.name.includes('-id') || el.name.includes('-product')) el.value = ''; 
+            if(el.type === 'checkbox') el.checked = false; 
+        });
+        newRow.querySelector('.preview-container').innerHTML = '';
+        newRow.querySelector('.sizes-container').innerHTML = `<div class="size-entry"><input type="text" name="size_name_${i}[]" class="size-input" placeholder="Size" style="width:70px!important"><input type="number" name="size_qty_${i}[]" class="qty-input" placeholder="Qty" style="width:80px!important"><button type="button" onclick="removeSize(this)" style="color:var(--error-red); background:none; border:none; font-size:20px;">&times;</button></div>`;
+        tbody.appendChild(newRow); 
+        updateRowIndices();
+    });
+
+    function removeVariantRow(btn) {
+        const rows = document.querySelectorAll('.variant-row'), row = btn.closest('tr'), idF = row.querySelector('input[name*="-id"]');
+        if(rows.length > 1) {
+            if(idF && idF.value) { 
+                const del = row.querySelector('input[name*="-DELETE"]'); 
+                if(del) { del.checked = true; row.style.display = 'none'; row.classList.remove('variant-row'); } 
+            } else row.remove();
+            updateRowIndices();
+        } else alert("At least one color is required.");
+    }
+</script>
+{% endblock %}

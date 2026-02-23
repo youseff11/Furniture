@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+    :root { 
+        /* الهوية البصرية الموحدة لـ Lusso */
+        --accent-gold: #b8860b;
+        --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
+        --light-gold-bg: radial-gradient(circle at top, #ffffff 0%, #f9f1e0 100%);
+        --card-white: #ffffff;
+        --text-main: #1a1a1a;
+        --text-dim: #666666;
+        --border-luxury: rgba(184, 134, 11, 0.15);
+        --danger: #a00000;
+        --luxury-ease: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    body { 
+        background: #fffcf5; 
+        color: var(--text-main); 
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .dashboard-container { 
+        padding: 160px 5% 100px; 
+        min-height: 100vh; 
+        background: var(--light-gold-bg); 
+    }
+    
+    /* --- Stats Section --- */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-bottom: 50px; }
+    .stat-card { 
+        background: var(--card-white); 
+        border: 1px solid var(--border-luxury);
+        border-radius: 0; /* تصميم حاد وأنيق */
+        padding: 30px; 
+        text-align: center; 
+        transition: all 0.5s var(--luxury-ease);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+    .stat-card:hover { transform: translateY(-10px); border-color: var(--accent-gold); box-shadow: 0 20px 40px rgba(184, 134, 11, 0.1); }
+    .stat-card h3 { 
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem; margin: 0; 
+        background: var(--gold-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700; 
+    }
+    .stat-card p { margin: 10px 0 0; color: var(--text-dim); text-transform: uppercase; font-size: 11px; letter-spacing: 2px; font-weight: 600; }
+
+    /* --- Sections General --- */
+    .management-section { 
+        background: var(--card-white); 
+        padding: 30px; 
+        border: 1px solid var(--border-luxury); 
+        margin-bottom: 40px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border-luxury); padding-bottom: 15px; }
+    .section-header h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+
+    /* --- Table Styling --- */
+    .scrollable-table { 
+        max-height: 600px; 
+        overflow-y: auto; 
+    }
+
+    table { width: 100%; border-collapse: collapse; } 
+    
+    thead th { 
+        position: sticky; top: 0; background: #fdfaf3; z-index: 10;
+        text-align: left; padding: 20px; color: var(--accent-gold); 
+        font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+        border-bottom: 2px solid var(--border-luxury); 
+    }
+    
+    .main-row { cursor: pointer; transition: 0.3s; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .main-row:hover { background: #fdfaf3; }
+    
+    td { padding: 20px; vertical-align: middle; font-size: 14px; }
+
+    .product-img { width: 60px; height: 75px; object-fit: cover; border: 1px solid var(--border-luxury); }
+    .img-stack { position: relative; width: 60px; }
+    .color-preview-small { 
+        position: absolute; bottom: -5px; right: -5px; width: 18px; height: 18px; 
+        border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    }
+
+    /* --- Status Badges --- */
+    .badge { padding: 6px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .status-pending { background: #f9f1e0; color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+    .status-shipped { background: #e0f2f1; color: #00796b; border: 1px solid #00796b; }
+    .status-delivered { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
+
+    /* --- Buttons --- */
+    .btn-main, .btn-add { 
+        background: transparent; 
+        color: var(--accent-gold) !important; 
+        padding: 12px 25px; 
+        border: 1px solid var(--accent-gold);
+        text-transform: uppercase;
+        font-size: 11px; letter-spacing: 2px; font-weight: 600;
+        transition: all 0.4s var(--luxury-ease);
+        text-decoration: none;
+        display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-main:hover, .btn-add:hover { background: var(--accent-gold); color: #fff !important; }
+
+    /* --- Details Row --- */
+    .detail-row { display: none; background: #fcfcfc; }
+    .detail-content { padding: 40px; border-top: 1px solid var(--border-luxury); animation: fadeIn 0.5s; }
+
+    .order-item-mini { 
+        display: flex; justify-content: space-between; align-items: center; 
+        padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .discount-container { background: #fdfaf3; padding: 25px; border: 1px solid var(--border-luxury); margin-top: 20px; }
+    .final-price { font-size: 1.5rem; color: #000; font-weight: 700; font-family: 'Playfair Display'; }
+
+    /* --- Mobile --- */
+    @media (max-width: 768px) {
+        .dashboard-container { padding: 120px 3% 50px; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .section-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+        thead { display: none; }
+        tr.main-row { display: block; margin-bottom: 20px; border: 1px solid var(--border-luxury); padding: 15px; }
+        td { display: flex; justify-content: space-between; align-items: center; width: 100% !important; border: none !important; padding: 10px 0 !important; }
+        .col-customer::before { content: "Customer:"; font-weight: 600; color: var(--accent-gold); }
+        .col-total::before { content: "Total:"; font-weight: 600; }
+    }
+</style>
+
+<div class="dashboard-container">
+    <div style="margin-bottom: 60px; text-align: center;">
+        <h2 style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3.5rem); margin: 0; text-transform: uppercase;">
+            Admin <span>Management</span>
+        </h2>
+        <p style="color: var(--accent-gold); letter-spacing: 4px; font-size: 12px; font-weight: 600; margin-top: 10px;">LUSSO INTERNAL SYSTEMS</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><h3>{{ orders_count }}</h3><p>Total Orders</p></div>
+        <div class="stat-card"><h3>{{ pending_orders }}</h3><p>Pending</p></div>
+        <div class="stat-card"><h3>{{ products_count }}</h3><p>Inventory</p></div>
+        <div class="stat-card"><h3>{{ total_revenue|floatformat:0 }}</h3><p>Revenue (LE)</p></div>
+    </div>
+
+    <div class="management-section animate__animated animate__fadeInUp">
+        <div class="section-header">
+            <h3><i class="fas fa-layer-group" style="margin-right: 10px; color: var(--accent-gold);"></i> Catalog Inventory</h3>
+            <a href="{% url 'add_product' %}" class="btn-add"><i class="fas fa-plus"></i> Add New Piece</a>
+        </div>
+        <div class="table-responsive scrollable-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Preview</th> 
+                        <th>Product Identity</th>
+                        <th>Price</th> 
+                        <th>Collection</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="main-row">
+                        <td>
+                            <div class="img-stack">
+                                {% with first_variant=product.variants.first %}
+                                    <img src="{% if first_variant and first_variant.variant_image %}{{ first_variant.variant_image.url }}{% else %}{{ product.main_image.url }}{% endif %}" class="product-img">
+                                    {% if first_variant %}<div class="color-preview-small" style="background: {{ first_variant.color_code }};"></div>{% endif %}
+                                {% endwith %}
+                            </div>
+                        </td>
+                        <td><strong style="font-family: 'Playfair Display'; font-size: 1.1rem;">{{ product.name }}</strong></td>
+                        <td style="font-weight: 600;">{{ product.price|floatformat:0 }} LE</td>
+                        <td><span style="color: var(--text-dim); text-transform: uppercase; font-size: 11px;">{{ product.category.name }}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 20px;">
+                                <a href="/admin/store/product/{{ product.id }}/change/" style="color: var(--accent-gold); text-decoration: none; font-weight: 700; font-size: 11px; letter-spacing: 1px;">EDIT</a>
+                                <a href="{% url 'delete_product' product.id %}" style="color: var(--danger); text-decoration: none; font-weight: 700; font-size: 11px; letter-spacing: 1px;" onclick="return confirm('Delete this product permanently?')">REMOVE</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="management-section animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+        <div class="section-header">
+            <h3><i class="fas fa-shopping-bag" style="margin-right: 10px; color: var(--accent-gold);"></i> Client Orders</h3>
+        </div>
+        <div class="table-responsive scrollable-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ref. ID</th>
+                        <th>Customer</th>
+                        <th>Net Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="main-row" onclick="toggleRow('order-{{ order.id }}')">
+                        <td style="font-weight: 600; color: var(--accent-gold);">#{{ order.id }}</td>
+                        <td class="col-customer"><strong>{{ order.name }}</strong></td>
+                        <td class="col-total" style="font-weight: 700;">{{ order.total_price|floatformat:0 }} LE</td>
+                        <td><span class="badge status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+                        <td style="color: var(--text-dim);">{{ order.created_at|date:"d M, Y" }}</td>
+                        <td style="text-align: right;"><i class="fas fa-chevron-down" style="opacity: 0.3;"></i></td>
+                    </tr>
+                    <tr id="order-{{ order.id }}" class="detail-row">
+                        <td colspan="6">
+                            <div class="detail-content">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+                                    <div>
+                                        <h4 style="font-family: 'Playfair Display'; margin-bottom: 20px;">Order Manifest</h4>
+                                        {% for item in order.items.all %}
+                                        <form method="POST" action="{% url 'update_item_quantity' item.id %}" class="order-item-mini">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" id="action-{{ item.id }}" value="update">
+                                            <div style="display: flex; align-items: center; gap: 20px;">
+                                                <img src="{{ item.product.main_image.url }}" style="width: 50px; height: 60px; object-fit: cover;">
+                                                <div>
+                                                    <div style="font-weight: 600;">{{ item.product.name }}</div>
+                                                    <small style="color: var(--text-dim)">{{ item.color }} | Size: {{ item.size }}</small>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 15px;">
+                                                <input type="number" name="quantity" value="{{ item.quantity }}" style="width: 45px; border: 1px solid var(--border-luxury); padding: 5px; text-align: center;">
+                                                <button type="submit" class="btn-icon" style="background:none; border:none; color: var(--accent-gold); cursor:pointer;"><i class="fas fa-sync"></i></button>
+                                                <span style="font-weight: 700;">{{ item.subtotal|floatformat:0 }} LE</span>
+                                            </div>
+                                        </form>
+                                        {% endfor %}
+                                        
+                                        <div class="discount-container">
+                                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                                                <span>Subtotal:</span><span>{{ order.get_items_total|floatformat:0 }} LE</span>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid var(--border-luxury); padding-bottom:10px;">
+                                                <span style="color: var(--danger);">Adjustments:</span>
+                                                <span style="color: var(--danger);">- {{ order.get_discount_amount|floatformat:0 }} LE</span>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                <strong>Total Amount:</strong><span class="final-price">{{ order.total_price|floatformat:0 }} LE</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 style="font-family: 'Playfair Display'; margin-bottom: 20px;">Shipping Details</h4>
+                                        <div style="background: #fdfaf3; padding: 25px; border: 1px solid var(--border-luxury); font-size: 14px; line-height: 2;">
+                                            <div><i class="fas fa-user" style="width: 25px; color: var(--accent-gold);"></i> {{ order.name }}</div>
+                                            <div><i class="fas fa-phone" style="width: 25px; color: var(--accent-gold);"></i> {{ order.phone }}</div>
+                                            <div><i class="fas fa-map-pin" style="width: 25px; color: var(--accent-gold);"></i> {{ order.address }}, {{ order.governorate }}</div>
+                                        </div>
+                                        <h4 style="font-family: 'Playfair Display'; margin: 30px 0 15px;">Logistics Status</h4>
+                                        <form method="POST" action="{% url 'update_order_status' order.id %}" style="display: flex; gap: 10px;">
+                                            {% csrf_token %}
+                                            <select name="status" style="flex:1; padding: 12px; border: 1px solid var(--border-luxury); background: #fff;">
+                                                {% for code, label in order.STATUS_CHOICES %}
+                                                <option value="{{ code }}" {% if order.status == code %}selected{% endif %}>{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn-main">Update</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="management-section animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+        <div class="section-header">
+            <h3><i class="fas fa-envelope-open-text" style="margin-right: 10px; color: var(--accent-gold);"></i> Inquiries</h3>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <tbody>
+                    {% for msg in messages %}
+                    <tr class="main-row" onclick="toggleRow('msg-{{ msg.id }}')">
+                        <td style="width: 25%;"><strong>{{ msg.name }}</strong></td>
+                        <td style="color: var(--accent-gold); font-weight: 600;">{{ msg.subject }}</td>
+                        <td style="color: var(--text-dim); text-align: right;">{{ msg.created_at|date:"d M" }}</td>
+                        <td style="width: 50px; text-align: right;"><i class="fas fa-chevron-down" style="opacity: 0.3;"></i></td>
+                    </tr>
+                    <tr id="msg-{{ msg.id }}" class="detail-row">
+                        <td colspan="4">
+                            <div class="detail-content">
+                                <div style="background: #fff; padding: 30px; border: 1px solid var(--border-luxury);">
+                                    <p style="line-height: 1.8; font-size: 15px; margin-bottom: 30px;">{{ msg.message|linebreaks }}</p>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-luxury); padding-top: 20px;">
+                                        <div style="font-size: 13px; color: var(--text-dim);">
+                                            <span style="margin-right: 25px;"><i class="fas fa-envelope"></i> {{ msg.email }}</span>
+                                            <span><i class="fas fa-phone"></i> {{ msg.phone }}</span>
+                                        </div>
+                                        <a href="mailto:{{ msg.email }}" class="btn-main">Draft Response</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" style="text-align: center; padding: 50px; color: var(--text-dim);">No new inquiries.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleRow(rowId) {
+        const row = document.getElementById(rowId);
+        const isVisible = row.style.display === 'table-row' || row.style.display === 'block';
+        
+        // إغلاق الصفوف المفتوحة في نفس القسم
+        const prefix = rowId.split('-')[0];
+        document.querySelectorAll(`[id^='${prefix}-']`).forEach(r => { 
+            r.style.display = 'none'; 
+        });
+        
+        if (!isVisible) {
+            row.style.display = window.innerWidth <= 768 ? 'block' : 'table-row';
+        }
+    }
+</script>
+{% endblock %}
