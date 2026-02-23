@@ -6,8 +6,8 @@
 
 <style>
     :root {
-        /* الهوية البصرية لـ Lusso - النسخة الفاتحة */
-        --accent-gold: #b8860b;
+        /* الهوية البصرية لـ أبو يحيى */
+        --accent-gold: #c5a059;
         --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
         --light-gold-bg: radial-gradient(circle at top, #ffffff 0%, #f9f1e0 100%);
         --card-white: #ffffff;
@@ -29,7 +29,7 @@
         margin: 0;
     }
 
-    /* زر اللغة بستايل Lusso المحدث */
+    /* زر اللغة */
     .lang-switch {
         position: fixed;
         bottom: 40px;
@@ -45,10 +45,10 @@
         transition: var(--luxury-ease);
         backdrop-filter: blur(10px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        font-family: var(--font-ar-body);
         display: flex;
         align-items: center;
         gap: 10px;
+        border-radius: 50px;
     }
 
     .lang-switch:hover { 
@@ -60,32 +60,24 @@
     .about-container {
         max-width: 1100px;
         margin: 0 auto;
-        padding: 180px 20px 100px;
+        padding: 160px 20px 100px;
         min-height: 100vh;
         background: var(--light-gold-bg);
-        transition: var(--luxury-ease);
     }
 
-    /* وضع الـ RTL للعربية */
-    .about-container.rtl { 
-        direction: rtl; 
-        text-align: right; 
-    }
+    .about-container.rtl { direction: rtl; text-align: right; }
     
-    .about-container.rtl h1, 
-    .about-container.rtl h2, 
-    .about-container.rtl h3,
-    .about-container.rtl .closing-statement { 
+    .about-container.rtl h1, .about-container.rtl h2, .about-container.rtl h3 { 
         font-family: var(--font-ar-heading); 
     }
 
     .lang-switch.btn-rtl { right: auto; left: 40px; }
 
     /* الهيدر */
-    .about-header { text-align: center; margin-bottom: 100px; }
+    .about-header { text-align: center; margin-bottom: 80px; }
     .about-header h1 {
         font-family: var(--font-en-heading);
-        font-size: clamp(2.5rem, 8vw, 4.5rem);
+        font-size: clamp(2rem, 7vw, 4rem);
         margin: 0;
         font-weight: 700;
         color: #1a1a1a;
@@ -97,82 +89,63 @@
     }
     .subtitle {
         color: var(--accent-gold);
-        letter-spacing: 3px;
+        letter-spacing: 2px;
         text-transform: uppercase;
         font-size: 14px;
         display: block;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         font-weight: 600;
     }
 
-    /* قسم القصة - Story Section */
+    /* قسم القصة */
     .story-section {
         background: var(--card-white);
         border: 1px solid var(--border-luxury);
-        margin-bottom: 80px;
-        position: relative;
+        margin-bottom: 60px;
         box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+        border-radius: 15px;
     }
 
-    .story-inner {
-        padding: 80px 40px;
-        text-align: center;
-    }
-
-    .story-inner h2 { 
-        font-family: var(--font-en-heading); 
-        color: #1a1a1a; 
-        font-size: 36px;
-        margin-bottom: 30px;
-    }
-
-    .story-inner p {
-        max-width: 800px;
-        margin: 0 auto 25px;
-        font-size: 1.15rem;
-        color: var(--text-dim);
-    }
+    .story-inner { padding: 60px 40px; text-align: center; }
+    .story-inner h2 { font-size: 32px; margin-bottom: 25px; color: #1a1a1a; }
+    .story-inner p { max-width: 850px; margin: 0 auto 20px; font-size: 1.1rem; color: var(--text-dim); }
 
     /* كروت المعلومات */
     .info-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 30px;
-        margin-bottom: 100px;
+        margin-bottom: 80px;
     }
 
     .info-card {
-        padding: 50px 30px;
+        padding: 40px 30px;
         border: 1px solid var(--border-luxury);
         background: var(--card-white);
         text-align: center;
         transition: var(--luxury-ease);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.02);
+        border-radius: 12px;
     }
 
     .info-card:hover { 
         border-color: var(--accent-gold); 
         transform: translateY(-10px); 
-        box-shadow: 0 15px 35px rgba(184, 134, 11, 0.1);
     }
-    .info-card i { font-size: 30px; color: var(--accent-gold); margin-bottom: 25px; }
-    .info-card h3 { font-family: var(--font-en-heading); font-size: 22px; color: #1a1a1a; margin-bottom: 15px; }
-    .info-card p { font-size: 1rem; color: var(--text-dim); }
+    .info-card i { font-size: 35px; color: var(--accent-gold); margin-bottom: 20px; }
+    .info-card h3 { font-size: 22px; margin-bottom: 15px; }
 
     .closing-statement {
         text-align: center;
-        padding: 80px 20px;
-        border-top: 1px solid var(--border-luxury);
-        font-family: var(--font-en-heading);
-        font-size: 28px;
+        padding: 60px 20px;
+        font-family: var(--font-ar-heading);
+        font-size: 30px;
         color: var(--accent-gold);
-        font-style: italic;
+        border-top: 1px solid var(--border-luxury);
     }
 
     @media (max-width: 768px) {
-        .about-header h1 { font-size: 2.5rem; }
-        .story-inner { padding: 50px 20px; }
-        .lang-switch { bottom: 20px; right: 20px; padding: 10px 18px; }
+        .about-header h1 { font-size: 2.2rem; }
+        .lang-switch { bottom: 20px; right: 20px; }
     }
 </style>
 
@@ -183,20 +156,20 @@
 
 <div class="about-container rtl" id="content-area">
     <header class="about-header">
-        <span class="subtitle" data-en="Our Legacy & Vision" data-ar="إرثنا ورؤيتنا">إرثنا ورؤيتنا</span>
-        <h1 data-en="The World of <span>Lusso</span>" data-ar="عالم <span>لوسو</span>">عالم <span>لوسو</span></h1>
+        <span class="subtitle" data-en="Craftsmanship & Authenticity" data-ar="الحرفية والأصالة">الحرفية والأصالة</span>
+        <h1 data-en="The World of <span>Abu Yhia</span>" data-ar="عالم <span>أبو يحيى</span>">عالم <span>أبو يحيى</span></h1>
     </header>
 
     <section class="story-section">
         <div class="story-inner">
-            <h2 data-en="The Artisan Philosophy" data-ar="فلسفة الحرفية">فلسفة الحرفية</h2>
-            <p data-en="Lusso is not merely a store; it is a sanctuary for those who appreciate the finer details of modern elegance. We curate collections that balance contemporary trends with timeless comfort." 
-               data-ar="لوسو ليس مجرد متجر؛ إنه ملاذ لأولئك الذين يقدرون التفاصيل الدقيقة للأناقة الحديثة. نحن ننسق مجموعات توازن بين الصيحات المعاصرة والراحة الأبدية.">
-               لوسو ليس مجرد متجر؛ إنه ملاذ لأولئك الذين يقدرون التفاصيل الدقيقة للأناقة الحديثة. نحن ننسق مجموعات توازن بين الصيحات المعاصرة والراحة الأبدية.
+            <h2 data-en="Furniture with Soul" data-ar="أثاث بروح فنية">أثاث بروح فنية</h2>
+            <p data-en="Abu Yhia Furniture is more than a factory; it is where wood meets art. We specialize in creating high-end furniture that reflects your unique personality and lasts for generations." 
+               data-ar="أبو يحيى لتصنيع الأثاث ليس مجرد مصنع؛ بل هو المكان الذي يلتقي فيه الخشب بالفن. نحن متخصصون في ابتكار قطع أثاث راقية تعكس شخصيتكم الفريدة وتدوم لأجيال.">
+               أبو يحيى لتصنيع الأثاث ليس مجرد مصنع؛ بل هو المكان الذي يلتقي فيه الخشب بالفن. نحن متخصصون في ابتكار قطع أثاث راقية تعكس شخصيتكم الفريدة وتدوم لأجيال.
             </p>
-            <p data-en="We believe that true luxury is found in the <strong>experience of wearing</strong> perfection." 
-               data-ar="نحن نؤمن بأن الفخامة الحقيقية تكمن في <strong>تجربة ارتداء</strong> الإتقان.">
-               نحن نؤمن بأن الفخامة الحقيقية تكمن في <strong>تجربة ارتداء</strong> الإتقان.
+            <p data-en="Every piece we craft is a testament to our commitment to quality, durability, and luxury." 
+               data-ar="كل قطعة نصنعها هي شهادة على التزامنا بالجودة، المتانة، والفخامة.">
+               كل قطعة نصنعها هي شهادة على التزامنا بالجودة، المتانة، والفخامة.
             </p>
         </div>
     </section>
@@ -204,32 +177,32 @@
     <div class="info-grid">
         <div class="info-card">
             <i class="fa-regular fa-clock"></i>
-            <h3 data-en="Atelier Hours" data-ar="ساعات العمل">ساعات العمل</h3>
-            <p data-en="Available daily from <strong>4:00 PM to 12:00 AM</strong> to curate your bespoke orders." 
-               data-ar="متواجدون يومياً من <strong>4:00 عصراً حتى 12:00 منتصف الليل</strong> لتنسيق طلباتكم الخاصة.">
-                متواجدون يومياً من 4:00 عصراً حتى 12:00 منتصف الليل.
+            <h3 data-en="Working Hours" data-ar="مواعيد العمل">مواعيد العمل</h3>
+            <p data-en="We welcome you daily from <strong>1:00 PM to 10:00 PM</strong> to discuss your dream furniture." 
+               data-ar="نسعد باستقبالكم يومياً من <strong>1:00 ظهراً حتى 10:00 مساءً</strong> لمناقشة أثاث أحلامكم.">
+                نسعد باستقبالكم يومياً من 1:00 ظهراً حتى 10:00 مساءً.
             </p>
         </div>
         <div class="info-card">
-            <i class="fa-solid fa-crown"></i>
-            <h3 data-en="Premium Logistics" data-ar="خدمات التوصيل">خدمات التوصيل</h3>
-            <p data-en="Dispatched with utmost care to all governorates across the <strong>Arab Republic of Egypt</strong>." 
-               data-ar="يتم إرسال الشحنات بأقصى درجات العناية لجميع محافظات <strong>جمهورية مصر العربية</strong>.">
-                توصيل سريع وآمن لجميع محافظات الجمهورية.
+            <i class="fa-solid fa-truck-ramp-box"></i>
+            <h3 data-en="Safe Delivery" data-ar="توصيل آمن">توصيل آمن</h3>
+            <p data-en="Professional shipping and handling to all Egyptian governorates, ensuring your furniture arrives in perfect condition." 
+               data-ar="شحن وتناول احترافي لجميع محافظات مصر، لضمان وصول أثاثكم في أفضل حالة.">
+                توصيل وتركيب احترافي لجميع محافظات جمهورية مصر العربية.
             </p>
         </div>
         <div class="info-card">
-            <i class="fa-solid fa-gem"></i>
-            <h3 data-en="Concierge Support" data-ar="دعم العملاء">دعم العملاء</h3>
-            <p data-en="Dedicated human assistance to ensure your journey with Lusso is seamless and prestigious." 
-               data-ar="مساعدة مخصصة لضمان أن تكون رحلتك مع لوسو سلسة وراقية تليق بكم.">
-                دعم فني مخصص لتجربة تسوق استثنائية.
+            <i class="fa-solid fa-hammer"></i>
+            <h3 data-en="Bespoke Design" data-ar="تصميم حسب الطلب">تصميم حسب الطلب</h3>
+            <p data-en="Customize your furniture details from wood type to fabrics, guided by our expert artisans." 
+               data-ar="خصص تفاصيل أثاثك من نوع الخشب إلى الأقمشة، بإشراف أمهر الحرفيين لدينا.">
+                دعم فني واستشارات لاختيار أفضل الخامات التي تناسب منزلك.
             </p>
         </div>
     </div>
 
-    <div class="closing-statement" data-en='"Excellence is not a skill, it is an attitude."' data-ar='"التميز ليس مهارة، بل هو نهج حياة"'>
-        "التميز ليس مهارة، بل هو نهج حياة"
+    <div class="closing-statement" data-en='"Quality is not an act, it is a habit."' data-ar='"الجودة ليست فعلاً، بل هي عادة ملازمة لنا"'>
+        "الجودة ليست فعلاً، بل هي عادة ملازمة لنا"
     </div>
 </div>
 

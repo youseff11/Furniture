@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
     :root {
-        /* الهوية البصرية لـ Lusso - النسخة الفاتحة */
-        --accent-gold: #b8860b; /* ذهبي أعمق قليلاً للتباين */
+        --accent-gold: #c5a059;
         --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
         --light-gold-bg: radial-gradient(circle at top, #ffffff 0%, #f9f1e0 100%);
         --card-white: #ffffff;
@@ -14,66 +14,56 @@
         --text-dim: #555555;
         --transition-luxury: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         --border-luxury: rgba(184, 134, 11, 0.15);
+        --font-ar: 'IBM Plex Sans Arabic', sans-serif;
+        --font-heading: 'Amiri', serif;
     }
 
     body {
-        font-family: 'Montserrat', sans-serif;
-        background: #fffcf5; /* لون أساسي فاتح */
+        font-family: var(--font-ar);
+        background: #fffcf5;
         color: var(--text-main);
         margin: 0;
-        overflow-x: hidden;
     }
 
-    /* زر تبديل اللغة بستايل Lusso المحدث */
     .lang-switch {
         position: fixed;
         bottom: 40px;
         right: 40px;
         z-index: 1000;
-        background: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.9);
         color: var(--accent-gold);
         border: 1px solid var(--accent-gold);
-        padding: 12px 20px;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+        padding: 12px 24px;
+        font-size: 13px;
         font-weight: 600;
         cursor: pointer;
         transition: var(--transition-luxury);
         backdrop-filter: blur(10px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
-    .lang-switch:hover {
-        background: var(--accent-gold);
-        color: #fff;
-        transform: translateY(-5px);
-    }
+    .lang-switch:hover { background: var(--accent-gold); color: #fff; transform: translateY(-5px); }
 
     .policy-container {
-        padding: 180px 20px 100px;
+        padding: 160px 20px 100px;
         max-width: 1000px;
         margin: 0 auto;
         min-height: 100vh;
-        background: var(--light-gold-bg); /* تطبيق التدرج الذهبي الفاتح */
-        transition: var(--transition-luxury);
+        background: var(--light-gold-bg);
     }
 
-    /* إعدادات وضع الـ RTL */
-    .policy-container.rtl { direction: rtl; text-align: right; font-family: 'Cairo', sans-serif; }
-    .policy-container.rtl .policy-icon { margin-right: 0; margin-left: 30px; }
-    .policy-container.rtl .policy-content ul li { padding-left: 0; padding-right: 25px; }
-    .policy-container.rtl .policy-content ul li::before { left: auto; right: 0; }
+    .policy-container.rtl { direction: rtl; text-align: right; }
     .lang-switch.btn-rtl { right: auto; left: 40px; }
 
-    /* الهيدر */
-    .policy-header { text-align: center; margin-bottom: 100px; }
+    .policy-header { text-align: center; margin-bottom: 80px; }
     .policy-header h1 {
-        font-family: 'Playfair Display', serif;
+        font-family: var(--font-heading);
         font-size: clamp(2.5rem, 8vw, 4rem);
-        font-weight: 700;
         margin: 0;
-        letter-spacing: 2px;
         color: #1a1a1a;
     }
     .policy-header h1 span {
@@ -82,128 +72,79 @@
         -webkit-text-fill-color: transparent;
     }
 
-    /* كروت السياسات الفاتحة */
     .policy-card {
-        position: relative;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
         background: var(--card-white);
         border: 1px solid var(--border-luxury);
+        border-radius: 15px;
+        overflow: hidden;
         transition: var(--transition-luxury);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
     }
 
-    .policy-card:hover { 
-        border-color: var(--accent-gold);
-        transform: scale(1.01);
-        box-shadow: 0 20px 50px rgba(184, 134, 11, 0.1);
-    }
+    .policy-card:hover { transform: translateY(-5px); border-color: var(--accent-gold); }
 
-    .policy-inner {
-        padding: 45px;
-        display: flex;
-        align-items: flex-start;
-    }
-
+    .policy-inner { padding: 40px; display: flex; align-items: flex-start; gap: 25px; }
     .policy-icon {
-        width: 50px;
-        height: 50px;
-        flex-shrink: 0;
-        border: 1px solid var(--accent-gold);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 30px;
-        color: var(--accent-gold);
-        font-size: 20px;
+        width: 50px; height: 50px; flex-shrink: 0;
+        background: var(--gold-gradient);
+        color: white;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 20px;
     }
 
     .policy-body h2 {
         margin: 0 0 15px 0;
-        font-family: 'Playfair Display', serif;
-        font-size: 1.6rem;
-        color: #1a1a1a;
-        font-weight: 700;
+        font-family: var(--font-heading);
+        font-size: 1.8rem;
+        color: var(--accent-gold);
     }
 
-    .policy-content p { color: var(--text-dim); line-height: 1.8; font-size: 0.95rem; }
-    .policy-content ul { list-style: none; padding: 0; margin-top: 20px; }
+    .policy-content ul { list-style: none; padding: 0; margin: 0; }
     .policy-content ul li {
-        margin-bottom: 12px;
-        padding-left: 25px;
+        margin-bottom: 15px;
         position: relative;
-        color: var(--text-main);
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
+        padding-right: 25px;
+        line-height: 1.7;
+        color: var(--text-dim);
     }
     .policy-content ul li::before {
-        content: '';
+        content: '•';
         position: absolute;
-        left: 0; top: 10px;
-        width: 8px; height: 1px;
-        background: var(--accent-gold);
-    }
-
-    /* تذييل الصفحة */
-    .contact-note {
-        text-align: center;
-        margin-top: 100px;
-        padding: 50px;
-        border-top: 1px solid var(--border-luxury);
-    }
-    .contact-note p { font-size: 1rem; color: var(--text-dim); letter-spacing: 1px; }
-    .contact-note a {
+        right: 0;
         color: var(--accent-gold);
-        text-decoration: none;
-        font-weight: 600;
-        border-bottom: 1px solid var(--accent-gold);
-        transition: 0.3s;
+        font-weight: bold;
     }
-    .contact-note a:hover { background: var(--accent-gold); color: #fff; }
 
-    /* Responsive Design */
+    .contact-note { text-align: center; margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border-luxury); }
+    .contact-note a { color: var(--accent-gold); font-weight: 600; text-decoration: none; }
+
     @media (max-width: 768px) {
-        .policy-container { padding: 120px 20px; }
-        .policy-inner { flex-direction: column; align-items: center; text-align: center; }
-        .policy-icon { margin: 0 0 25px 0 !important; }
-        .policy-header h1 { font-size: 2.5rem; }
-        .lang-switch { bottom: 20px; right: 20px; padding: 10px 15px; }
+        .policy-inner { flex-direction: column; text-align: center; align-items: center; }
+        .policy-content ul li { padding-right: 0; }
+        .policy-content ul li::before { display: none; }
     }
 </style>
 
 <button class="lang-switch" id="lang-btn" onclick="toggleLanguage()">
-    <i class="fa-solid fa-globe"></i>&nbsp; 
-    <span id="btn-text">العربية</span>
+    <i class="fa-solid fa-globe"></i>
+    <span id="btn-text">English</span>
 </button>
 
-<div class="policy-container" id="content-area">
+<div class="policy-container rtl" id="content-area">
     <header class="policy-header">
-        <h1>Lusso <span>Concierge & Policies</span></h1>
+        <h1 data-en="Terms & <span>Contract Conditions</span>" data-ar="شروط <span>التعاقد والسياسات</span>">شروط <span>التعاقد والسياسات</span></h1>
     </header>
 
     <article class="policy-card">
         <div class="policy-inner">
-            <div class="policy-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="policy-icon"><i class="fa-solid fa-pen-to-square"></i></div>
             <div class="policy-body">
-                <h2 data-en="Exchange & Return" data-ar="الاستبدال والاسترجاع">Exchange & Return</h2>
-                <div class="policy-content">
-                    <p data-en="Our commitment to uncompromising quality ensures a refined shopping experience. By engaging with our services, you accept these bespoke terms." 
-                       data-ar="التزامنا بالجودة التي لا تضاهى يضمن لك تجربة تسوق راقية. من خلال التعامل مع خدماتنا، فإنك تقبل هذه الشروط الخاصة.">
-                       Our commitment to uncompromising quality ensures a refined shopping experience. By engaging with our services, you accept these bespoke terms.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </article>
-
-    <article class="policy-card">
-        <div class="policy-inner">
-            <div class="policy-icon"><i class="fa-solid fa-ruler-combined"></i></div>
-            <div class="policy-body">
-                <h2 data-en="Sizing Protocol" data-ar="بروتوكول المقاسات">Sizing Protocol</h2>
+                <h2 data-en="Order Modifications" data-ar="تعديل وإلغاء الطلب">تعديل وإلغاء الطلب</h2>
                 <div class="policy-content">
                     <ul>
-                        <li data-en="Final size confirmation is mandatory before the artisan dispatch." data-ar="التأكيد النهائي للمقاس إلزامي قبل خروج القطعة من المشغل.">Final size confirmation is mandatory before the artisan dispatch.</li>
-                        <li data-en="Discrepancies in size post-dispatch remain the client's responsibility." data-ar="أي اختلاف في المقاس بعد الشحن يقع ضمن مسؤولية العميل.">Discrepancies in size post-dispatch remain the client's responsibility.</li>
+                        <li data-ar="يسمح بتعديل الأوردر خلال 48 ساعة من التعاقد بشرط تواجد العميل في المعرض مع إحضار أصل العقد." data-en="Modifications are allowed within 48 hours of the contract, provided the client visits the showroom with the original contract.">يسمح بتعديل الأوردر خلال 48 ساعة من التعاقد بشرط تواجد العميل في المعرض مع إحضار أصل العقد.</li>
+                        <li data-ar="يحق للعميل إلغاء الأوردر خلال 48 ساعة من تاريخ التعاقد." data-en="The client has the right to cancel the order within 48 hours of the contract date.">يحق للعميل إلغاء الأوردر خلال 48 ساعة من تاريخ التعاقد.</li>
+                        <li data-ar="في حالة إلغاء الأوردر بعد 48 ساعة يتم خصم 20% من مبلغ مقدم الحجز." data-en="If the order is cancelled after 48 hours, 20% of the down payment will be deducted.">في حالة إلغاء الأوردر بعد 48 ساعة يتم خصم 20% من مبلغ مقدم الحجز.</li>
                     </ul>
                 </div>
             </div>
@@ -212,13 +153,13 @@
 
     <article class="policy-card">
         <div class="policy-inner">
-            <div class="policy-icon"><i class="fa-solid fa-box-open"></i></div>
+            <div class="policy-icon"><i class="fa-solid fa-warehouse"></i></div>
             <div class="policy-body">
-                <h2 data-en="Manufacturing Integrity" data-ar="نزاهة التصنيع">Manufacturing Integrity</h2>
+                <h2 data-en="Delivery & Storage" data-ar="الاستلام والتخزين">الاستلام والتخزين</h2>
                 <div class="policy-content">
                     <ul>
-                        <li data-en="Returns are exclusively reserved for manufacturing non-conformities." data-ar="المرتجعات محصورة حصرياً في حالات عدم مطابقة معايير التصنيع.">Returns are exclusively reserved for manufacturing non-conformities.</li>
-                        <li data-en="Visual documentation is required immediately upon receipt of the collection." data-ar="يجب تقديم توثيق مرئي فور استلام المجموعة في حالة وجود عيب.">Visual documentation is required immediately upon receipt of the collection.</li>
+                        <li data-ar="يتوجب على العميل الاستلام في الموعد المحدد، وفي حالة عدم الالتزام تضاف قيمة تخزين 500 ج.م يومياً بعد فترة سماح 10 أيام." data-en="The client must take delivery on the specified date; otherwise, a storage fee of 500 EGP per day applies after a 10-day grace period.">يتوجب على العميل الاستلام في الموعد المحدد، وفي حالة عدم الالتزام تضاف قيمة تخزين 500 ج.م يومياً بعد فترة سماح 10 أيام.</li>
+                        <li data-ar="في حالة تأخير المصنع عن موعد التسليم، يحق للعميل خصم 5% من قيمة العقد بعد فترة سماح 10 أيام." data-en="If the factory delays delivery, the client is entitled to a 5% discount after a 10-day grace period.">في حالة تأخير المصنع عن موعد التسليم، يحق للعميل خصم 5% من قيمة العقد بعد فترة سماح 10 أيام.</li>
                     </ul>
                 </div>
             </div>
@@ -226,14 +167,31 @@
     </article>
 
     <article class="policy-card">
-        <div class="policy-inner">
-            <div class="policy-icon"><i class="fa-solid fa-gem"></i></div>
+        <article class="policy-inner">
+            <div class="policy-icon"><i class="fa-solid fa-medal"></i></div>
             <div class="policy-body">
-                <h2 data-en="Private Sale Terms" data-ar="شروط العروض الخاصة">Private Sale Terms</h2>
+                <h2 data-en="Warranty & After-Sales" data-ar="الضمان وخدمة ما بعد البيع">الضمان وخدمة ما بعد البيع</h2>
                 <div class="policy-content">
                     <ul>
-                        <li data-en="Acquisitions made during promotional drops are considered final." data-ar="القطع التي يتم اقتناؤها خلال فترة العروض تعتبر نهائية.">Acquisitions made during promotional drops are considered final.</li>
-                        <li data-en="Completion of an order signifies full adherence to Lusso's private terms." data-ar="إتمام الطلب يعني الالتزام الكامل بشروط لوسو الخاصة.">Completion of an order signifies full adherence to Lusso's private terms.</li>
+                        <li data-ar="خدمة ما بعد البيع مدى الحياة تشمل (أول 5 سنوات مجاناً داخل الضمان) لجميع الخامات ما عدا القماش." data-en="Lifetime after-sales service including (first 5 years free under warranty) for all materials except fabric.">خدمة ما بعد البيع مدى الحياة تشمل (أول 5 سنوات مجاناً داخل الضمان) لجميع الخامات ما عدا القماش.</li>
+                        <li data-ar="الضمان غير ساري في حالة فقد الفاتورة." data-en="Warranty is void if the invoice is lost.">الضمان غير ساري في حالة فقد الفاتورة.</li>
+                        <li data-ar="الشركة غير مسؤولة عن أي مقاسات يقوم العميل بتقديمها." data-en="The company is not responsible for any measurements provided by the client.">الشركة غير مسؤولة عن أي مقاسات يقوم العميل بتقديمها.</li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+    </article>
+
+    <article class="policy-card">
+        <div class="policy-inner">
+            <div class="policy-icon"><i class="fa-solid fa-truck"></i></div>
+            <div class="policy-body">
+                <h2 data-en="Shipping & Logistics" data-ar="الشحن والخدمات اللوجستية">الشحن والخدمات اللوجستية</h2>
+                <div class="policy-content">
+                    <ul>
+                        <li data-ar="في حالة وجود سلم ضيق (أقل من 90 سم)، يتم التسليم عند باب العمارة مع خصم قيمة المشال فقط." data-en="In case of narrow stairs (less than 90 cm), delivery is made at the building entrance with a deduction for labor only.">في حالة وجود سلم ضيق (أقل من 90 سم)، يتم التسليم عند باب العمارة مع خصم قيمة المشال فقط.</li>
+                        <li data-ar="في حالة طلب العميل رجوع المنتج للمصنع والاستلام لاحقاً، يتم إضافة قيمة النقل مرة أخرى." data-en="If the client requests returning the product to the factory for later delivery, an additional shipping fee will be charged.">في حالة طلب العميل رجوع المنتج للمصنع والاستلام لاحقاً، يتم إضافة قيمة النقل مرة أخرى.</li>
+                        <li data-ar="بمجرد التوقيع على ورق الطباعة (الاستلام)، لا يحق للعميل الاسترجاع أو الاستبدال نهائياً." data-en="Once the delivery receipt is signed, the client has no right to return or exchange the product.">بمجرد التوقيع على ورق الطباعة (الاستلام)، لا يحق للعميل الاسترجاع أو الاستبدال نهائياً.</li>
                     </ul>
                 </div>
             </div>
@@ -241,9 +199,9 @@
     </article>
 
     <div class="contact-note">
-        <p data-en="Require further legal assistance? <a href='/contact/'>Contact Lusso Support</a>" 
-           data-ar="هل تحتاج إلى مزيد من الدعم القانوني؟ <a href='/contact/'>تواصل مع دعم لوسو</a>">
-             Require further legal assistance? <a href="/contact/">Contact Lusso Support</a>
+        <p data-en="For any inquiries, please <a href='/contact/'>Contact Our Office</a>" 
+           data-ar="لأي استفسارات إضافية، يرجى <a href='/contact/'>التواصل مع إدارة أبو يحيى</a>">
+             لأي استفسارات إضافية، يرجى <a href="/contact/">التواصل مع إدارة أبو يحيى</a>
         </p>
     </div>
 </div>

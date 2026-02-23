@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,8 +11,9 @@
             color: #ffffff;
             padding: 100px 8% 40px;
             position: relative;
-            font-family: 'Poppins', sans-serif;
-            border-top: 1px solid rgba(197, 160, 89, 0.2); /* خط ذهبي خفيف جداً */
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            border-top: 1px solid rgba(197, 160, 89, 0.2);
+            /* direction: rtl; */
         }
 
         .footer-grid {
@@ -23,12 +24,11 @@
         }
 
         .footer h3 {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Amiri', serif;
             font-size: 22px;
             margin-bottom: 30px;
             color: #c5a059; /* ذهبي */
             letter-spacing: 1px;
-            text-transform: uppercase;
         }
 
         .footer p {
@@ -58,18 +58,18 @@
 
         .footer-links a:hover {
             color: #c5a059;
-            transform: translateX(-5px); /* حركة لليمين بسبب RTL أو اليسار */
+            transform: translateX(-5px); /* حركة لليمين في RTL */
         }
 
         .footer-social {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             margin-top: 30px;
         }
 
         .footer-social a {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
@@ -78,6 +78,7 @@
             font-size: 18px;
             text-decoration: none;
             transition: all 0.4s;
+            border-radius: 4px;
         }
 
         .footer-social a:hover {
@@ -97,21 +98,24 @@
             gap: 20px;
             font-size: 13px;
             color: #666;
-            letter-spacing: 1px;
         }
 
+        /* تنسيق اسم البراند الجديد */
         .footer-brand {
-            font-family: 'Playfair Display', serif;
-            font-size: 30px;
+            font-family: 'Amiri', serif;
+            font-size: 28px;
             font-weight: 700;
             color: #ffffff;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
+            margin-bottom: 15px;
         }
 
         .footer-brand span {
             color: #c5a059;
+            display: block;
+            font-size: 14px;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-weight: 300;
+            margin-top: -5px;
         }
 
         .newsletter-input {
@@ -121,18 +125,31 @@
             color: #fff;
             padding: 10px 0;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             outline: none;
             transition: border-color 0.4s;
+            text-align: right;
         }
 
         .newsletter-input:focus {
             border-color: #c5a059;
         }
 
+        .subscribe-btn {
+            color: #c5a059;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .subscribe-btn:hover {
+            letter-spacing: 1px;
+        }
+
         @media (max-width: 768px) {
             .footer { padding: 60px 5% 30px; }
-            .footer-bottom { text-align: center; justify-content: center; }
+            .footer-bottom { text-align: center; justify-content: center; flex-direction: column; }
         }
     </style>
 </head>
@@ -142,52 +159,49 @@
     <div class="footer-grid">
 
         <div>
-            <div class="footer-brand">Lusso<span>Gallery</span></div>
+            <div class="footer-brand">
+                أبو يحيى
+                <span>لتصنيع الأثاث</span>
+            </div>
             <p>
-                نحن نصنع الفخامة في كل تفصيلة. معرض لوسو يوفر أرقى قطع الأثاث المصممة خصيصاً لتناسب أسلوب حياتك العصري والفريد.
+                نصنع الفخامة من خشب الطبيعة. جودة التصنيع وإتقان التفاصيل هي ما يميز أعمالنا في صناعة الأثاث الراقي الذي يدوم لأجيال.
             </p>
 
             <div class="footer-social">
-                <a href="https://facebook.com/..." title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                <a href="https://instagram.com/..." title="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="https://wa.me/..." title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                <a href="https://www.facebook.com/mohammed.yahia332533" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.instagram.com/yhia9716/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.tiktok.com/search?q=mohamedyhia846&t=1771957965481" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                <a href="https://wa.me/201020304907" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
             </div>
         </div>
 
         <div>
-            <h3>المجموعات</h3>
+            <h3>الأقسام</h3>
             <ul class="footer-links">
                 <li><a href="{% url 'shop' %}?category=living">غرف المعيشة</a></li>
                 <li><a href="{% url 'shop' %}?category=bedroom">غرف النوم</a></li>
-                <li><a href="{% url 'shop' %}?category=office">الأثاث المكتبي</a></li>
-                <li><a href="{% url 'shop' %}">أحدث التصاميم</a></li>
+                <li><a href="{% url 'shop' %}?category=kitchen">المطابخ</a></li>
+                <li><a href="{% url 'shop' %}">أحدث الموديلات</a></li>
             </ul>
         </div>
 
         <div>
-            <h3>عن المعرض</h3>
+            <h3>عن المصنع</h3>
             <ul class="footer-links">
-                <li><a href="{% url 'about' %}">قصتنا</a></li>
-                <li><a href="{% url 'contact' %}">فروعنا</a></li>
+                <li><a href="{% url 'about' %}">من نحن</a></li>
+                <li><a href="{% url 'contact' %}">تواصل معنا</a></li>
                 <li><a href="{% url 'policies' %}">سياسة الضمان</a></li>
-                <li><a href="{% url 'contact' %}">الأسئلة الشائعة</a></li>
+                <li><a href="{% url 'contact' %}">موقعنا</a></li>
             </ul>
         </div>
 
-        <div>
-            <h3>كن على اطلاع</h3>
-            <p>اشترك لتصلك أحدث تصاميمنا والعروض الحصرية.</p>
-            <form style="margin-top: 20px;">
-                <input type="email" placeholder="البريد الإلكتروني" class="newsletter-input">
-                <a href="#" style="color: #c5a059; text-decoration: none; font-size: 12px; font-weight: 600; text-transform: uppercase;">اشترك الآن &rarr;</a>
-            </form>
-        </div>
+
 
     </div>
 
     <div class="footer-bottom">
-        <div>© 2026 Lusso Interior Gallery. جميع الحقوق محفوظة.</div>
-        <div style="text-transform: uppercase; letter-spacing: 2px;">Designed for Elegant Homes</div>
+        <div>© 2026 أبو يحيى لتصنيع الأثاث. جميع الحقوق محفوظة.</div>
+        <div style="letter-spacing: 1px;">صُنع بكل فخر في مصر</div>
     </div>
 </footer>
 

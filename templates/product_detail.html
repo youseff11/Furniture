@@ -10,7 +10,6 @@
 {% block content %}
 <style>
     :root {
-        /* الهوية البصرية الموحدة لـ Lusso */
         --accent-gold: #b8860b;
         --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
         --luxury-bg: #fffcf5;
@@ -347,9 +346,9 @@
 
     document.getElementById('add-to-cart-btn').addEventListener('click', function(e) {
         if (!this.classList.contains('btn-disabled')) {
-            const eid = generateEventID();
+            // const eid = generateEventID(); // تعطيل مؤقت
             
-            // 1. Facebook Track
+            // 1. Facebook Track (Browser Side)
             if (typeof fbq !== 'undefined') {
                 fbq('track', 'AddToCart', {
                     content_name: productName, 
@@ -357,15 +356,14 @@
                     content_type: 'product',
                     value: productPrice, 
                     currency: 'EGP'
-                }, { eventID: eid });
+                });
             }
 
-            // 2. Show Luxury Notification
             showLussoToast();
 
-            // 3. Redirect to Backend After a small delay to see the toast
+            // 3. Redirect to Backend - إزالة الـ eid من الرابط لمنع الـ NameError في الـ View
             setTimeout(() => {
-                window.location.href = `/add-to-cart/${productId}/?color=${encodeURIComponent(selColor)}&size=${encodeURIComponent(selSize)}&eid=${eid}`;
+                window.location.href = `/add-to-cart/${productId}/?color=${encodeURIComponent(selColor)}&size=${encodeURIComponent(selSize)}`;
             }, 800);
 
         } else e.preventDefault();

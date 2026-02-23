@@ -19,45 +19,45 @@ from django.db import connection
 from django.db.models import Case, When, Value, IntegerField
 from django.contrib import messages
 from decimal import Decimal
-# FB_PIXEL_ID = '792214427202379'  
-# FB_ACCESS_TOKEN = 'EAAXY0i6ZArdwBQUwZAq4Mx7ArysubuZAELX8l1XnZBVA1gqWwklibClR6Hrw5Ves0DhZCK5SjjtrqwZAfWeX6yZBCmzsqNlUlW4cwTk4NQFHcCqT2rKPxfPLKMbr6DxvK4Gg0XlNqJGhBVTWqvgQR92MvT9CamOHpNDiUQ2X7bDc7s3LxXQZB6I9vSKs9R8u0ZCWv8gZDZD'
-# FB_API_VERSION = 'v18.0'
+FB_PIXEL_ID = '792214427202379'  
+FB_ACCESS_TOKEN = 'EAAXY0i6ZArdwBQUwZAq4Mx7ArysubuZAELX8l1XnZBVA1gqWwklibClR6Hrw5Ves0DhZCK5SjjtrqwZAfWeX6yZBCmzsqNlUlW4cwTk4NQFHcCqT2rKPxfPLKMbr6DxvK4Gg0XlNqJGhBVTWqvgQR92MvT9CamOHpNDiUQ2X7bDc7s3LxXQZB6I9vSKs9R8u0ZCWv8gZDZD'
+FB_API_VERSION = 'v18.0'
 
-# def send_fb_capi_event(request, event_name, event_id=None, user_data=None, custom_data=None):
-#     url = f"https://graph.facebook.com/{FB_API_VERSION}/{FB_PIXEL_ID}/events"
+def send_fb_capi_event(request, event_name, event_id=None, user_data=None, custom_data=None):
+    url = f"https://graph.facebook.com/{FB_API_VERSION}/{FB_PIXEL_ID}/events"
     
-#     if not event_id:
-#         event_id = f"server_{int(time.time())}_{hashlib.md5(request.META.get('HTTP_USER_AGENT', '').encode()).hexdigest()[:6]}"
+    if not event_id:
+        event_id = f"server_{int(time.time())}_{hashlib.md5(request.META.get('HTTP_USER_AGENT', '').encode()).hexdigest()[:6]}"
 
-#     payload_user_data = {
-#         "client_ip_address": request.META.get('REMOTE_ADDR'),
-#         "client_user_agent": request.META.get('HTTP_USER_AGENT'),
-#     }
+    payload_user_data = {
+        "client_ip_address": request.META.get('REMOTE_ADDR'),
+        "client_user_agent": request.META.get('HTTP_USER_AGENT'),
+    }
     
-#     if user_data:
-#         for key, value in user_data.items():
-#             if value:
-#                 payload_user_data[key] = hashlib.sha256(str(value).lower().strip().encode()).hexdigest()
+    if user_data:
+        for key, value in user_data.items():
+            if value:
+                payload_user_data[key] = hashlib.sha256(str(value).lower().strip().encode()).hexdigest()
 
-#     data = {
-#         "data": [
-#             {
-#                 "event_name": event_name,
-#                 "event_id": event_id,  
-#                 "event_time": int(time.time()),
-#                 "action_source": "website",
-#                 "event_source_url": request.build_absolute_uri(),
-#                 "user_data": payload_user_data,
-#                 "custom_data": custom_data or {}
-#             }
-#         ],
-#         "access_token": FB_ACCESS_TOKEN
-#     }
+    data = {
+        "data": [
+            {
+                "event_name": event_name,
+                "event_id": event_id,  
+                "event_time": int(time.time()),
+                "action_source": "website",
+                "event_source_url": request.build_absolute_uri(),
+                "user_data": payload_user_data,
+                "custom_data": custom_data or {}
+            }
+        ],
+        "access_token": FB_ACCESS_TOKEN
+    }
 
-#     try:
-#         requests.post(url, json=data)
-#     except Exception as e:
-#         print(f"Facebook CAPI Error: {e}")
+    try:
+        requests.post(url, json=data)
+    except Exception as e:
+        print(f"Facebook CAPI Error: {e}")
 
 VariantFormSet = inlineformset_factory(
     Product, 
@@ -121,7 +121,6 @@ def product_detail(request, id):
             "currency": "EGP"
         }
     )
-    
     return render(request, 'product_detail.html', {'product': product})
 
 def contact_view(request):
@@ -139,9 +138,7 @@ def contact_view(request):
             subject=subject, 
             message=message
         )
-
         full_message = f"New message from {name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
-        
         try:
             send_mail(
                 subject=f"Ice Club Store: {subject}",
@@ -163,7 +160,6 @@ def add_to_cart(request, product_id):
         user_cart_key = f"cart_{request.user.id}"
     else:
         user_cart_key = "cart_guest"
-        
     cart = request.session.get(user_cart_key, {})
     selected_color = request.GET.get('color', 'Default') 
     selected_size = request.GET.get('size', 'N/A')    
@@ -171,7 +167,6 @@ def add_to_cart(request, product_id):
     item_key = f"{product_id}_{selected_color}_{selected_size}"
     
     try:
-        # تعديل هنا: استخدام size_name بدلاً من size
         stock_item = ProductSize.objects.get(
             variant__product_id=product_id,
             variant__color_name=selected_color,
@@ -278,7 +273,6 @@ def update_cart(request, item_key, action):
             size_val = item_data['size'] # القيمة المخزنة في السيشن
             
             try:
-                # تعديل هنا: استخدام size_name بدلاً من size
                 stock_item = ProductSize.objects.get(
                     variant__product_id=product_id,
                     variant__color_name=color,

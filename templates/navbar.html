@@ -1,4 +1,5 @@
-<link rel="icon" type="image/png" href="https://img.icons8.com/ios-filled/50/c5a059/crown.png">
+{% load static %}
+<link rel="icon" type="image/png" href="/media/images/logo.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 
@@ -21,7 +22,6 @@
         margin: 0;
         padding: 0;
         background: var(--soft-white);
-        /* الخط الافتراضي للموقع */
         font-family: var(--font-body);
     }
 
@@ -29,7 +29,7 @@
         width: 100%;
         background: rgba(26, 26, 26, 0.98);
         backdrop-filter: blur(15px);
-        padding: 15px 50px;
+        padding: 12px 50px; /* تعديل بسيط للـ padding ليناسب الحجم الجديد */
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -40,34 +40,49 @@
         border-bottom: 1px solid rgba(197, 160, 89, 0.2);
     }
 
+    /* تنسيق شعار "أبو يحيى" النصي */
     .nav-logo {
-        font-family: var(--font-english);
-        font-size: 26px;
-        font-weight: 300;
-        color: #ffffff;
-        letter-spacing: 2px;
-        text-decoration: none;
-        text-transform: uppercase;
         display: flex;
-        align-items: center;
-        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        text-decoration: none;
+        line-height: 1.1; /* تقليل المسافة العمودية بين السطرين */
+        transition: transform 0.3s ease;
     }
 
-    .nav-logo span { 
-        color: var(--accent-gold); 
+    .nav-logo:hover {
+        transform: translateY(-2px); /* حركة بسيطة عند التمرير */
+    }
+
+    .nav-logo-text {
+        font-family: var(--font-heading);
+        font-size: 32px; /* تم تكبير الخط من 24px إلى 32px */
+        color: #ffffff;
         font-weight: 700;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .nav-logo-subtext {
+        font-family: var(--font-body);
+        font-size: 13px; /* تكبير بسيط للخط الفرعي أيضاً ليناسب التوازن البصري */
+        color: var(--accent-gold);
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-top: -2px;
     }
 
     .nav-links {
         display: flex;
         align-items: center;
-        gap: 30px;
+        gap: 25px;
     }
 
     .nav-links a {
         color: #e0e0e0;
         text-decoration: none;
-        font-size: 15px; /* حجم مثالي للخط العربي */
+        font-size: 15px;
         font-weight: 400;
         font-family: var(--font-body);
         transition: all 0.4s ease;
@@ -81,7 +96,7 @@
         width: 0%;
         height: 1.5px;
         background: var(--accent-gold);
-        right: 0; /* يبدأ الخط من اليمين في العربي */
+        right: 0;
         bottom: -2px;
         transition: all 0.4s ease;
     }
@@ -133,7 +148,7 @@
         position: absolute;
         top: -8px;
         right: -12px;
-        font-family: sans-serif; /* للأرقام */
+        font-family: sans-serif;
     }
 
     .admin-badge {
@@ -144,7 +159,6 @@
         padding-right: 15px;
     }
 
-    /* القائمة في الجوال */
     .mobile-controls {
         display: none;
         align-items: center;
@@ -165,11 +179,12 @@
         transition: 0.3s;
     }
 
-    /* Responsive */
+    /* التجاوب مع الشاشات المختلفة */
     @media (max-width: 992px) {
-        .navbar { padding: 15px 25px; }
+        .navbar { padding: 12px 25px; }
         .nav-links { gap: 15px; }
         .nav-links a { font-size: 14px; }
+        .nav-logo-text { font-size: 26px; } /* حجم أصغر قليلاً للتابلت */
     }
 
     @media (max-width: 768px) {
@@ -192,12 +207,14 @@
 
         .nav-links.active { display: flex; }
         .admin-badge { border-right: none; padding-right: 0; }
+        .nav-logo-text { font-size: 24px; } /* حجم أصغر للجوال */
     }
 </style>
 
 <nav class="navbar">
     <a href="{% url 'home' %}" class="nav-logo">
-        Lusso <span>Gallery</span>
+        <div class="nav-logo-text">أبو يحيى</div>
+        <div class="nav-logo-subtext">لتصنيع الأثاث</div>
     </a>
 
     <div class="nav-links" id="navLinks">
