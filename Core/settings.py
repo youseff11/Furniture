@@ -10,7 +10,7 @@ SECRET_KEY = 'django-insecure-1gd^kfuz6#!+!-wo8k-o$ew)#6k8t!tw6kb@2jboowno(r=)2x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.iceclubstore.com', 'iceclubstore.com', 'IceClub.pythonanywhere.com', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
