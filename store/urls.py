@@ -38,7 +38,7 @@ urlpatterns = [
     path('cart/update/<str:item_key>/<str:action>/', views.update_cart, name='update_cart'),
 
     # --- إتمام الطلب ---
-    path('checkout/', views.checkout, name='checkout'),
+    path('checkout/', views.checkout_abuyhia, name='checkout'),
 
     path('policies/', views.policies, name='policies'),
 ]

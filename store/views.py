@@ -309,7 +309,10 @@ def remove_from_cart(request, item_key):
         request.session.modified = True
     return redirect('cart_view')
 
-def checkout(request):
+def checkout_abuyhia(request):
+    """
+    دالة إتمام الشراء الخاصة بمتجر أبو يحيى للأثاث
+    """
     if request.user.is_authenticated:
         user_cart_key = f"cart_{request.user.id}"
     else:
@@ -318,12 +321,13 @@ def checkout(request):
     cart = request.session.get(user_cart_key, {})
     
     if not cart:
-        messages.warning(request, "Your cart is empty!")
+        messages.warning(request, "سلة المشتريات فارغة!")
         return redirect('shop')
 
     total_price = 0
     checkout_items = []
     
+    # التحقق من المخزون وحساب الإجمالي
     for item_key, item_data in cart.items():
         product = get_object_or_404(Product, id=item_data['product_id'])
         color_name = item_data.get('color')
@@ -338,11 +342,11 @@ def checkout(request):
         
         if variant_size:
             if variant_size.stock < quantity_requested:
-                messages.error(request, f"Sorry, only {variant_size.stock} left for {product.name} ({color_name} - {size_name}).")
+                messages.error(request, f"عذراً، المتاح فقط {variant_size.stock} من {product.name} ({color_name} - {size_name}).")
                 return redirect('cart_view')
         else:
             if product.stock < quantity_requested:
-                messages.error(request, f"Sorry, {product.name} is out of stock.")
+                messages.error(request, f"عذراً، المنتج {product.name} غير متوفر حالياً.")
                 return redirect('cart_view')
 
         price = product.discount_price if product.discount_price else product.price
@@ -365,12 +369,15 @@ def checkout(request):
             'image_url': image_url
         })
 
+    # إرسال حدث بدء الدفع لفيسبوك (اختياري)
     if request.method == 'GET' and total_price > 0:
-        send_fb_capi_event(
-            request, 
-            "InitiateCheckout", 
-            custom_data={"value": float(total_price), "currency": "EGP"}
-        )
+        try:
+            send_fb_capi_event(
+                request, 
+                "InitiateCheckout", 
+                custom_data={"value": float(total_price), "currency": "EGP"}
+            )
+        except: pass
 
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -379,6 +386,7 @@ def checkout(request):
         governorate = request.POST.get('governorate')
         address = request.POST.get('address')
 
+        # إنشاء الطلب في قاعدة البيانات
         order = Order.objects.create(
             name=name, email=email, phone=phone,
             governorate=governorate, address=address,
@@ -389,18 +397,21 @@ def checkout(request):
             order.user = request.user
             order.save()
 
-        send_fb_capi_event(
-            request, 
-            "Purchase", 
-            event_id=str(order.id), 
-            user_data={"em": email, "ph": phone},
-            custom_data={
-                "value": float(total_price), 
-                "currency": "EGP", 
-                "order_id": str(order.id),
-                "content_type": "product",
-            }
-        )
+        # إرسال حدث الشراء الناجح لفيسبوك
+        try:
+            send_fb_capi_event(
+                request, 
+                "Purchase", 
+                event_id=str(order.id), 
+                user_data={"em": email, "ph": phone},
+                custom_data={
+                    "value": float(total_price), 
+                    "currency": "EGP", 
+                    "order_id": str(order.id),
+                    "content_type": "product",
+                }
+            )
+        except: pass
 
         email_items_html = ""
         for item in checkout_items:
@@ -413,26 +424,29 @@ def checkout(request):
             img = item['image_url']
             sku = product.sku if hasattr(product, 'sku') and product.sku else "N/A"
 
+            # إنشاء عناصر الطلب
             OrderItem.objects.create(
                 order=order, product=product, color=color, size=size,
                 quantity=qty, price_at_purchase=price_each
             )
 
+            # بناء صفوف المنتجات في الإيميل
             email_items_html += f"""
                 <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle;">
-                        <img src="{img}" width="60" height="60" style="border-radius:8px; margin-right:12px; vertical-align:middle; border:1px solid #ddd; object-fit: cover;">
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; text-align:right;" dir="rtl">
+                        <img src="{img}" width="60" height="60" style="border-radius:8px; margin-left:12px; vertical-align:middle; border:1px solid #ddd; object-fit: cover;">
                         <div style="display: inline-block; vertical-align: middle;">
                             <strong style="font-size: 15px; color: #333;">{product.name}</strong><br>
-                            <span style="font-size: 12px; color: #888;">SKU: {sku}</span><br>
-                            <span style="font-size: 12px; color: #555;">Color: {color} | Size: {size}</span>
+                            <span style="font-size: 12px; color: #888;">كود: {sku}</span><br>
+                            <span style="font-size: 12px; color: #555;">اللون: {color} | المقاس: {size}</span>
                         </div>
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee; text-align:center;">{qty}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align:right; font-weight: bold;">{int(price_each * qty)} EGP</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align:left; font-weight: bold;">{int(price_each * qty)} ج.م</td>
                 </tr>
             """
 
+            # تحديث المخزون
             if variant_size:
                 variant_size.stock -= qty
                 variant_size.save()
@@ -440,46 +454,47 @@ def checkout(request):
                 product.stock -= qty
                 product.save()
 
+        # رسالة البريد الإلكتروني بتصميم "أبو يحيى للأثاث"
         html_message = f"""
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #f0f0f0; border-radius: 15px; overflow: hidden; background-color: #ffffff;">
-            <div style="background-color: #000000; color: #ffffff; padding: 30px; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px; letter-spacing: 2px;">ICE CLUB</h1>
-                <p style="margin: 5px 0 0; opacity: 0.7;">Order Confirmation #{order.id}</p>
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2d1b0; border-radius: 15px; overflow: hidden; background-color: #ffffff; text-align: right;">
+            <div style="background: linear-gradient(135deg, #c5a059 0%, #b8860b 100%); color: #ffffff; padding: 30px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px;">أبو يحيى لتصنيع الأثاث</h1>
+                <p style="margin: 5px 0 0; opacity: 0.9;">تأكيد طلب رقم #{order.id}</p>
             </div>
             <div style="padding: 30px;">
-                <h2 style="color: #333; margin-top: 0;">Hi {name},</h2>
-                <p style="color: #666; line-height: 1.6;">Thank you for your purchase! We've received your order and we're getting it ready for shipment.</p>
+                <h2 style="color: #333; margin-top: 0;">أهلاً {name}،</h2>
+                <p style="color: #666; line-height: 1.6;">شكراً لثقتك في "أبو يحيى". لقد استلمنا طلبك بنجاح وجاري العمل على تجهيزه وتسليمه لك في أفضل حالة.</p>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 25px;">
                     <thead>
-                        <tr style="background-color: #fafafa; border-bottom: 2px solid #333;">
-                            <th style="text-align: left; padding: 12px; color: #333;">Product Details</th>
-                            <th style="text-align: center; padding: 12px; color: #333;">Qty</th>
-                            <th style="text-align: right; padding: 12px; color: #333;">Subtotal</th>
+                        <tr style="background-color: #f9f6f0; border-bottom: 2px solid #c5a059;">
+                            <th style="text-align: right; padding: 12px; color: #333;">المنتج</th>
+                            <th style="text-align: center; padding: 12px; color: #333;">الكمية</th>
+                            <th style="text-align: left; padding: 12px; color: #333;">الإجمالي</th>
                         </tr>
                     </thead>
                     <tbody>{email_items_html}</tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="2" style="padding: 20px 10px; text-align: right; font-size: 16px; color: #777;">Grand Total:</td>
-                            <td style="padding: 20px 0; text-align: right; font-size: 22px; font-weight: bold; color: #d63031;">{int(total_price)} EGP</td>
+                            <td colspan="2" style="padding: 20px 10px; text-align: left; font-size: 16px; color: #777;">الإجمالي النهائي:</td>
+                            <td style="padding: 20px 0; text-align: left; font-size: 22px; font-weight: bold; color: #c5a059;">{int(total_price)} ج.م</td>
                         </tr>
                     </tfoot>
                 </table>
-                <div style="margin-top: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
-                    <h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Shipping Information</h4>
-                    <p style="margin: 5px 0; font-size: 14px; color: #555;"><strong>Address:</strong> {address}</p>
-                    <p style="margin: 5px 0; font-size: 14px; color: #555;"><strong>City:</strong> {governorate}</p>
-                    <p style="margin: 5px 0; font-size: 14px; color: #555;"><strong>Phone:</strong> {phone}</p>
+                <div style="margin-top: 30px; padding: 20px; background-color: #fcfaf5; border-radius: 10px; border: 1px solid #f1e9d8;">
+                    <h4 style="margin: 0 0 10px 0; color: #b8860b; border-bottom: 1px solid #e2d1b0; padding-bottom: 5px;">بيانات الشحن</h4>
+                    <p style="margin: 5px 0; font-size: 14px; color: #555;"><strong>العنوان:</strong> {address}</p>
+                    <p style="margin: 5px 0; font-size: 14px; color: #555;"><strong>المحافظة:</strong> {governorate}</p>
+                    <p style="margin: 5px 0; font-size: 14px; color: #555;"><strong>الهاتف:</strong> {phone}</p>
                 </div>
             </div>
-            <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 11px; color: #999;">
-                This is an automated message. Please do not reply directly to this email.<br>
-                © 2026 Ice Club Store. All rights reserved.
+            <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #999;">
+                هذه رسالة تلقائية، يرجى عدم الرد عليها مباشرة.<br>
+                © 2026 مصنع أبو يحيى للأثاث. جميع الحقوق محفوظة.
             </div>
         </div>
         """
 
-        subject = f"Ice Club - Order Confirmation #{order.id}"
+        subject = f"تأكيد طلبك من أبو يحيى للأثاث - رقم #{order.id}"
         plain_message = strip_tags(html_message)
         
         try:
@@ -494,6 +509,7 @@ def checkout(request):
         except:
             pass
 
+        # تفريغ السلة بعد نجاح العملية
         request.session[user_cart_key] = {}
         request.session.modified = True
         return render(request, 'order_success.html', {'order': order})
