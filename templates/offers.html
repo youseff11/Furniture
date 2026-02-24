@@ -9,10 +9,10 @@
 {% extends 'base.html' %}
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
     :root {
-        /* الهوية البصرية لـ Lusso - النسخة الفاتحة */
         --accent-gold: #b8860b;
         --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #b8860b 100%);
         --light-gold-bg: radial-gradient(circle at top, #ffffff 0%, #f9f1e0 100%);
@@ -23,8 +23,6 @@
         --border-luxury: rgba(184, 134, 11, 0.15);
         --luxury-ease: cubic-bezier(0.23, 1, 0.32, 1);
         --transition-smooth: all 0.6s var(--luxury-ease);
-        
-        /* الخطوط */
         --font-arabic-heading: 'Amiri', serif;
         --font-arabic-body: 'IBM Plex Sans Arabic', sans-serif;
     }
@@ -45,8 +43,6 @@
     }
 
     .offers-header { text-align: center; margin-bottom: 70px; }
-    
-    /* تنسيق العنوان الرئيسي */
     .offers-header h1 { 
         font-family: var(--font-arabic-heading);
         font-size: clamp(40px, 8vw, 75px); 
@@ -55,12 +51,11 @@
         color: #000;
         line-height: 1.2;
     }
-    
     .offers-header h1 span {
         background: var(--gold-gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-family: 'Playfair Display', serif; /* الحفاظ على اللمسة الإنجليزية لكلمة Privilege */
+        font-family: 'Playfair Display', serif;
     }
     
     .promo-banner {
@@ -103,17 +98,8 @@
         font-size: 11px; z-index: 5; letter-spacing: 0.5px;
         font-family: var(--font-arabic-body);
     }
-    
-    .sale-badge { 
-        top: 15px; left: 15px; /* تم العكس ليتناسب مع RTL */
-        background: var(--red-luxury); 
-        color: white;
-    }
-    .new-arrival-badge { 
-        top: 15px; right: 15px; /* تم العكس ليتناسب مع RTL */
-        background: var(--accent-gold); 
-        color: #fff; 
-    }
+    .sale-badge { top: 15px; left: 15px; background: var(--red-luxury); color: white; }
+    .new-arrival-badge { top: 15px; right: 15px; background: var(--accent-gold); color: #fff; }
     
     .sold-out-badge { 
         position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); 
@@ -132,7 +118,6 @@
         transition: transform 1.5s var(--luxury-ease), opacity 0.5s; 
     }
     .offer-card:hover .img-container img { transform: scale(1.06); }
-    
     .img-container.is-sold-out img { opacity: 0.4; filter: grayscale(1); }
 
     .image-nav-arrows { 
@@ -157,10 +142,7 @@
     .swatch.active { transform: scale(1.4); border-color: var(--accent-gold); box-shadow: 0 0 10px rgba(184, 134, 11, 0.2); }
     .swatch.is-sold-out-swatch { opacity: 0.3; }
 
-    .price-box { 
-        display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; 
-        direction: ltr; /* لضمان ظهور العملة بجانب الرقم بشكل صحيح */
-    }
+    .price-box { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; direction: ltr; }
     .new-price { font-size: 1.3rem; font-weight: 600; color: #000; letter-spacing: 0; }
     .old-price { text-decoration: line-through; color: var(--text-dim); font-size: 0.9rem; }
 
@@ -173,20 +155,54 @@
     .buy-btn:hover { background: var(--accent-gold); color: #fff; }
     .buy-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; border-color: #ccc; color: #ccc; }
 
+    /* زر الواتساب */
+    .whatsapp-float {
+        position: fixed;
+        width: 55px;
+        height: 55px;
+        bottom: 20px;
+        right: 20px;
+        background-color: #25d366;
+        color: #FFF;
+        border-radius: 50px;
+        text-align: center;
+        font-size: 28px;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: transform 0.3s ease;
+    }
+
     @media (max-width: 1200px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+    
+    /* تعديلات الموبايل */
     @media (max-width: 768px) {
-        .offers-wrapper { padding: 120px 20px 60px; }
-        .product-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .offers-header h1 { font-size: 2.2rem; }
+        .offers-wrapper { padding: 100px 10% 60px; } /* زيادة الهوامش الجانبية لتصغير الكارد */
+        .product-grid { 
+            grid-template-columns: 1fr; 
+            gap: 25px; 
+            max-width: 400px; /* تحديد أقصى عرض للشبكة في الموبايل */
+            margin: 0 auto;
+        }
+        .offers-header h1 { font-size: 2rem; }
+        .offer-card { padding-bottom: 15px; }
+        .img-container { margin-bottom: 15px; }
+        .offer-card h3 { font-size: 18px !important; }
+        .buy-btn { padding: 12px; font-size: 12px; }
     }
 </style>
+
+<a href="https://wa.me/201234567890" class="whatsapp-float" target="_blank">
+    <i class="fab fa-whatsapp"></i>
+</a>
 
 <div class="offers-wrapper">
     <div class="offers-header">
         <h1> <span>Privilege</span></h1>
-        <div class="promo-banner">
-            مجموعات حصرية محدودة الإصدار
-        </div>
+        <div class="promo-banner">مجموعات حصرية محدودة الإصدار</div>
     </div>
 
     <div class="product-grid">
@@ -241,24 +257,6 @@
 <script>
     let offerData = {};
 
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'view_item_list', {
-          item_list_id: "offers_page",
-          item_list_name: "Hot Offers",
-          items: [
-            {% for product in products %}
-            {
-              item_id: "{{ product.id }}",
-              item_name: "{{ product.name }}",
-              discount: {{ product.discount_percentage|default:0 }},
-              price: {{ product.discount_price|default:product.price|floatformat:2 }},
-              index: {{ forloop.counter }}
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-          ]
-        });
-    }
-
     function updateOffer(pId, el) {
         const img = document.getElementById('img-'+pId), badge = document.getElementById('badge-'+pId),
               btn = document.getElementById('btn-'+pId), cont = document.getElementById('cont-'+pId),
@@ -280,8 +278,6 @@
         badge.style.display = isOut ? 'block' : 'none';
         btn.classList.toggle('disabled', isOut);
         btn.innerText = isOut ? 'غير متوفر حالياً' : 'عرض التفاصيل';
-
-        if (typeof fbq !== 'undefined') fbq('track', 'CustomizeProduct', { content_ids: [pId] });
     }
 
     function changeImg(pId, dir, e) {
