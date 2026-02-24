@@ -231,8 +231,7 @@
                                             {% csrf_token %}
                                             <input type="hidden" name="action" id="action-{{ item.id }}" value="update">
                                             <div style="display: flex; align-items: center; gap: 20px;">
-                                                <img src="{{ item.product.main_image.url }}" style="width: 50px; height: 60px; object-fit: cover;">
-                                                <div>
+                                               <img src="{{ item.product.main_image }}" style="width: 50px; height: 60px; object-fit: cover;">
                                                     <div style="font-weight: 600;">{{ item.product.name }}</div>
                                                     <small style="color: var(--text-dim)">{{ item.color }} | Size: {{ item.size }}</small>
                                                 </div>
