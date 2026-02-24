@@ -12,7 +12,7 @@
 <style>
     :root {
         --accent-gold: #b8860b;
-        --luxury-bg: #fffcf5; /* الخلفية الكريمية المعتمدة */
+        --luxury-bg: #fffcf5; 
         --card-white: #ffffff;
         --text-main: #1a1a1a;
         --text-dim: #666666;
@@ -193,7 +193,6 @@
         padding: 120px 20px;
     }
 
-    /* تحسينات الموبايل */
     @media (max-width: 768px) {
         .cart-wrapper { padding-top: 120px; }
         .cart-container { padding: 40px 20px; }
@@ -291,22 +290,21 @@
 </style>
 
 <script>
-  // Tracking (Facebook & Google)
-  if (typeof fbq !== 'undefined') {
-    fbq('track', 'ViewContent', {
-      content_ids: [{% for item in cart_items %}'{{ item.product.id }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
-      content_type: 'product',
+  // Google Analytics Tracking (GA4)
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'view_cart', {
       value: {{ total_price }},
-      currency: 'EGP'
-    });
-  }
-
-  const checkoutBtn = document.querySelector('.checkout-btn');
-  if (checkoutBtn) {
-    checkoutBtn.addEventListener('click', function() {
-      if (typeof fbq !== 'undefined') {
-        fbq('track', 'InitiateCheckout', { value: {{ total_price }}, currency: 'EGP' });
-      }
+      currency: 'EGP',
+      items: [
+        {% for item in cart_items %}
+        {
+          item_id: '{{ item.product.id }}',
+          item_name: '{{ item.product.name }}',
+          price: {{ item.actual_price }},
+          quantity: {{ item.quantity }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
     });
   }
 </script>

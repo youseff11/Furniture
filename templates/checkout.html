@@ -101,7 +101,7 @@
         width: 100%;
         box-sizing: border-box;
         transition: var(--luxury-ease);
-        border-radius: 0; /* الحواف الحادة تعطي شعوراً بالفخامة */
+        border-radius: 0;
     }
 
     .form-group input:focus, .form-group select:focus {
@@ -283,37 +283,16 @@
 </div>
 
 <script>
-  if (typeof fbq !== 'undefined') {
-    fbq('track', 'InitiateCheckout', {
-      value: {{ total_price }},
-      currency: 'EGP',
-      content_category: 'Checkout'
-    });
-  }
-
-  const checkoutForm = document.querySelector('.checkout-form');
-  const formInputs = checkoutForm.querySelectorAll('input, select');
-  
-  let infoTracked = false;
-  formInputs.forEach(input => {
-    input.addEventListener('input', function() {
-      if (!infoTracked && typeof fbq !== 'undefined') {
-        fbq('track', 'AddPaymentInfo', {
-          content_category: 'Checkout',
+  // تتبع Google Analytics فقط عند تحميل الصفحة
+  if (typeof gtag !== 'undefined') {
+      gtag('event', 'begin_checkout', {
           value: {{ total_price }},
-          currency: 'EGP'
-        });
-        infoTracked = true;
-      }
-    });
-  });
-
-  checkoutForm.addEventListener('submit', function() {
-    if (typeof fbq !== 'undefined') {
-        fbq('trackCustom', 'AttemptedOrderConfirmation', {
-            total_value: {{ total_price }}
-        });
-    }
-  });
+          currency: 'EGP',
+          items: [{
+              item_name: "Checkout Process",
+              price: {{ total_price }}
+          }]
+      });
+  }
 </script>
 {% endblock %}

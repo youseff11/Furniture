@@ -156,7 +156,6 @@
     .buy-btn:hover { background: var(--accent-gold); color: #fff; }
     .buy-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; border-color: #ccc; color: #ccc; }
 
-    /* --- WhatsApp Multi-Contact Style (Same as Home) --- */
     .wa-float-container {
         position: fixed;
         bottom: 30px;
@@ -326,7 +325,6 @@
 </div>
 
 <script>
-    // WhatsApp Logic: Close when clicking outside
     document.addEventListener('click', (e) => {
         const container = document.getElementById('waContainer');
         if (!container.contains(e.target)) {

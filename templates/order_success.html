@@ -213,20 +213,6 @@
   const hasTracked = sessionStorage.getItem('tracked_purchase_' + orderId);
 
   if (!hasTracked) {
-      if (typeof fbq !== 'undefined') {
-          fbq('track', 'Purchase', {
-              value: totalPrice,
-              currency: 'EGP',
-              content_ids: [orderId], 
-              content_type: 'product',
-              em: '{{ order.email|lower }}'.trim(),
-              ph: '{{ order.phone }}'.trim(),
-              external_id: orderId 
-          }, {
-              eventID: orderId 
-          });
-      }
-
       if (typeof gtag !== 'undefined') {
           gtag('event', 'purchase', {
               transaction_id: orderId,

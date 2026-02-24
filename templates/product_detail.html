@@ -165,7 +165,6 @@
         padding-top: 30px;
     }
 
-    /* --- Luxury Toast Notification Style --- */
     .lusso-toast {
         position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
         background: var(--text-main); color: #fff;
@@ -253,10 +252,6 @@
     const productPrice = {{ product.discount_price|default:product.price|floatformat:0 }};
     const productName = "{{ product.name }}";
     const productId = "{{ product.id }}";
-
-    function generateEventID() { 
-        return "evt_" + Date.now() + "_" + Math.floor(Math.random() * 1000); 
-    }
 
     function showLussoToast() {
         const toast = document.getElementById('lussoToast');
@@ -346,26 +341,10 @@
 
     document.getElementById('add-to-cart-btn').addEventListener('click', function(e) {
         if (!this.classList.contains('btn-disabled')) {
-            // const eid = generateEventID(); // تعطيل مؤقت
-            
-            // 1. Facebook Track (Browser Side)
-            if (typeof fbq !== 'undefined') {
-                fbq('track', 'AddToCart', {
-                    content_name: productName, 
-                    content_ids: [productId], 
-                    content_type: 'product',
-                    value: productPrice, 
-                    currency: 'EGP'
-                });
-            }
-
             showLussoToast();
-
-            // 3. Redirect to Backend - إزالة الـ eid من الرابط لمنع الـ NameError في الـ View
             setTimeout(() => {
                 window.location.href = `/add-to-cart/${productId}/?color=${encodeURIComponent(selColor)}&size=${encodeURIComponent(selSize)}`;
             }, 800);
-
         } else e.preventDefault();
     });
 
