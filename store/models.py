@@ -96,7 +96,7 @@ class ProductVariant(models.Model):
     color_code = ColorField(default='#000000') 
     variant_image = ResizedImageField(
         size=[800, 1000], quality=75, upload_to='variants/', 
-        force_format='WEBP', crop=['middle', 'center']
+        force_format='WEBP'
     )
     @property
     def total_stock(self):
@@ -110,7 +110,7 @@ class ProductImage(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='additional_images')
     image = ResizedImageField(
         size=[800, 1000], quality=75, upload_to='variants/extra/', 
-        force_format='WEBP', crop=['middle', 'center']
+        force_format='WEBP'
     )
     alt_text = models.CharField(max_length=200, blank=True, null=True)
 
