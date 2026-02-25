@@ -174,6 +174,7 @@ def cart_view(request):
     return render(request, 'cart.html', {'cart_items': cart_items, 'total_price': total_price})
 
 def update_cart(request, item_key, action):
+    # تحديد مفتاح السلة بناءً على حالة تسجيل الدخول
     if request.user.is_authenticated:
         user_cart_key = f"cart_{request.user.id}"
     else:
@@ -182,33 +183,45 @@ def update_cart(request, item_key, action):
     cart = request.session.get(user_cart_key, {})
     
     if item_key in cart:
+        item_data = cart[item_key]
+        
         if action == 'increase':
-            item_data = cart[item_key]
             product_id = item_data['product_id']
             color = item_data['color']
             size_val = item_data['size']
             
             try:
+                # محاولة جلب المخزن بناءً على اللون والمقاس (ProductSize)
                 stock_item = ProductSize.objects.get(
                     variant__product_id=product_id,
                     variant__color_name=color,
                     size_name=size_val
                 )
+                available_stock = stock_item.stock
                 
-                if cart[item_key]['quantity'] < stock_item.stock:
-                    cart[item_key]['quantity'] += 1
-                else:
-                    messages.warning(request, f"Only {stock_item.stock} units left.")
             except ProductSize.DoesNotExist:
-                messages.error(request, "Stock error occurred.")
+                # إذا لم يوجد مقاسات، نتحقق من مخزن المنتج الأساسي
+                product = get_object_or_404(Product, id=product_id)
+                available_stock = product.stock
+            
+            # التحقق من الكمية المطلوبة مقابل المتاح
+            if item_data['quantity'] < available_stock:
+                cart[item_key]['quantity'] += 1
+            else:
+                # إرسال رسالة تحذيرية تظهر في صفحة السلة
+                messages.warning(request, f"عذراً، المتاح في المخزن هو {available_stock} قطع فقط من هذا المنتج.")
                 
         elif action == 'decrease':
             cart[item_key]['quantity'] -= 1
             if cart[item_key]['quantity'] <= 0: 
                 del cart[item_key]
+                messages.info(request, "تمت إزالة القطعة من حقيبة المشتريات.")
                 
+        # حفظ التعديلات في الجلسة (Session)
         request.session[user_cart_key] = cart
         request.session.modified = True
+    else:
+        messages.error(request, "عذراً، لم نتمكن من العثور على هذا المنتج في حقيبتك.")
         
     return redirect('cart_view')
     

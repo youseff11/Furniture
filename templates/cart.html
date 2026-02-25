@@ -27,6 +27,32 @@
 
     body { background-color: var(--luxury-bg); font-family: 'Montserrat', sans-serif; }
 
+    /* تنسيق رسائل التنبيه - Django Messages */
+    .messages-container {
+        position: fixed;
+        top: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+    }
+    .alert {
+        padding: 15px 25px;
+        border-radius: 0;
+        margin-bottom: 10px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        border: 1px solid var(--accent-gold);
+        animation: fadeInDown 0.5s both;
+    }
+    .alert-warning { background: #fff3cd; color: #856404; border-right: 5px solid #ffc107; }
+    .alert-success { background: #d4edda; color: #155724; border-right: 5px solid #28a745; }
+    .alert-error { background: #f8d7da; color: #721c24; border-right: 5px solid #dc3545; }
+
     .cart-wrapper {
         padding: 160px 5% 100px;
         min-height: 100vh;
@@ -160,6 +186,7 @@
 
     /* --- Responsive Fixes --- */
     @media (max-width: 768px) {
+        .messages-container { top: 80px; }
         .cart-wrapper { padding: 120px 15px 50px; }
         .cart-container { padding: 30px 20px; }
         .cart-table thead { display: none; }
@@ -174,6 +201,28 @@
         .mobile-price { display: block; color: var(--accent-gold); font-weight: 700; margin-top: 10px; }
     }
 </style>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fa-solid {% if message.tags == 'warning' %}fa-triangle-exclamation{% elif message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}" style="margin-left: 10px;"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+<script>
+    // إخفاء الرسائل تلقائياً بعد 4 ثوانٍ
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = "0.5s";
+            alert.style.opacity = "0";
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 4000);
+</script>
+{% endif %}
 
 <div class="cart-wrapper">
     <div class="cart-container-outer animate__animated animate__fadeIn">
@@ -270,7 +319,6 @@
 </div>
 
 <script>
-    // إغلاق قائمة الواتساب عند النقر في أي مكان آخر
     document.addEventListener('click', (e) => {
         const container = document.getElementById('waContainer');
         if (!container.contains(e.target)) {
@@ -278,7 +326,6 @@
         }
     });
 
-    // Google Analytics (GA4)
     if (typeof gtag !== 'undefined') {
         gtag('event', 'view_cart', {
             value: {{ total_price|default:0 }},
