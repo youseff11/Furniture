@@ -9,6 +9,10 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
 <style>
     :root {
         --accent-gold: #b8860b;
@@ -17,188 +21,157 @@
         --text-main: #1a1a1a;
         --text-dim: #666666;
         --border-luxury: rgba(184, 134, 11, 0.15);
-        --luxury-ease: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        --luxury-ease: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        --whatsapp-green: #25D366;
     }
+
+    body { background-color: var(--luxury-bg); font-family: 'Montserrat', sans-serif; }
 
     .cart-wrapper {
         padding: 160px 5% 100px;
-        background: var(--luxury-bg);
         min-height: 100vh;
-        color: var(--text-main);
         display: flex;
         justify-content: center;
-        align-items: flex-start; 
+        align-items: flex-start;
     }
 
     .cart-container-outer {
-        position: relative;
         max-width: 1100px;
         width: 100%;
         background: var(--card-white);
         border: 1px solid var(--border-luxury);
-        box-shadow: 0 30px 60px rgba(184, 134, 11, 0.05);
+        box-shadow: 0 40px 80px rgba(0,0,0,0.03);
+        position: relative;
     }
 
-    .cart-container {
-        position: relative;
-        z-index: 5;
-        width: 100%;
-        padding: 60px;
-    }
+    .cart-container { padding: 60px; }
 
     .cart-header {
         border-bottom: 1px solid var(--border-luxury);
         padding-bottom: 30px;
-        margin-bottom: 50px;
+        margin-bottom: 40px;
         display: flex;
         justify-content: space-between;
-        align-items: baseline;
+        align-items: center;
     }
 
     .cart-header h2 {
         font-family: 'Playfair Display', serif;
-        font-size: 2.5rem;
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
         font-weight: 400;
-        letter-spacing: 1px;
         margin: 0;
     }
 
-    .cart-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
+    /* تحسين الجدول */
+    .cart-table { width: 100%; border-collapse: collapse; }
     .cart-table th {
         text-align: left;
         color: var(--accent-gold);
         text-transform: uppercase;
-        font-size: 11px;
+        font-size: 10px;
         letter-spacing: 3px;
-        padding-bottom: 25px;
-        font-weight: 700;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-luxury);
     }
 
-    .cart-item td {
-        padding: 35px 0;
-        border-bottom: 1px solid rgba(184, 134, 11, 0.08);
-    }
+    .cart-item td { padding: 30px 0; border-bottom: 1px solid rgba(0,0,0,0.03); }
 
-    .item-detail {
-        display: flex;
-        align-items: center;
-        gap: 30px;
-    }
-
+    .item-detail { display: flex; align-items: center; gap: 25px; }
     .item-img {
-        width: 100px;
-        height: 130px;
+        width: 110px; height: 140px;
         object-fit: cover;
-        background: #fdfaf3;
         border: 1px solid var(--border-luxury);
         transition: var(--luxury-ease);
     }
+    .item-img:hover { transform: scale(1.03); }
 
-    .item-img:hover { transform: scale(1.05); }
+    .item-name { font-size: 1.1rem; color: var(--text-main); margin-bottom: 5px; display: block; }
+    .item-meta-tag { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
 
-    .item-info span {
-        display: block;
-        font-family: 'Montserrat', sans-serif;
-    }
-
-    .item-name {
-        font-size: 1.1rem;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-        color: var(--text-main);
-    }
-
-    .item-meta-tag {
-        font-size: 11px;
-        color: var(--text-dim);
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-
+    /* أزرار الكمية الاحترافية */
     .qty-controls {
         display: flex;
         align-items: center;
-        gap: 20px;
+        gap: 15px;
         border: 1px solid var(--border-luxury);
-        padding: 10px 20px;
+        padding: 8px 15px;
         width: fit-content;
-        background: #fff;
     }
-
-    .qty-btn {
-        color: var(--text-main);
-        text-decoration: none;
-        font-size: 1.1rem;
-        transition: 0.3s;
-    }
-
+    .qty-btn { color: var(--text-main); text-decoration: none; font-size: 1.2rem; transition: 0.3s; }
     .qty-btn:hover { color: var(--accent-gold); }
-
-    .qty-box { font-size: 15px; min-width: 25px; text-align: center; font-weight: 600; }
+    .qty-box { font-weight: 600; min-width: 25px; text-align: center; }
 
     .btn-remove {
-        color: #999;
-        text-decoration: none;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+        color: #d9d9d9;
         transition: 0.3s;
-        border-bottom: 1px solid transparent;
+        font-size: 0.9rem;
     }
-
-    .btn-remove:hover { color: #cc0000; border-color: #cc0000; }
+    .btn-remove:hover { color: #cc0000; }
 
     .cart-summary {
-        margin-top: 60px;
-        padding-top: 40px;
+        margin-top: 50px;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        border-top: 1px solid var(--border-luxury);
     }
 
     .total-price {
         font-family: 'Playfair Display', serif;
         font-size: 2.5rem;
-        margin-bottom: 35px;
-        color: var(--text-main);
+        margin-bottom: 30px;
     }
 
     .checkout-btn {
         background: var(--text-main);
         color: #fff;
-        padding: 22px 70px;
-        text-decoration: none;
-        font-weight: 600;
+        padding: 22px 60px;
         text-transform: uppercase;
         letter-spacing: 3px;
-        font-size: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none;
         transition: var(--luxury-ease);
         border: 1px solid var(--text-main);
-        text-align: center;
     }
+    .checkout-btn:hover { background: transparent; color: var(--text-main); transform: translateY(-3px); }
 
-    .checkout-btn:hover {
-        background: transparent;
-        color: var(--text-main);
-        transform: translateY(-5px);
+    /* --- WhatsApp Widget --- */
+    .wa-float-container {
+        position: fixed; bottom: 30px; right: 30px; z-index: 999;
+        display: flex; flex-direction: column; align-items: flex-end; gap: 15px;
     }
-
-    .empty-cart-msg {
-        text-align: center;
-        padding: 120px 20px;
+    .wa-contact-list {
+        display: none; flex-direction: column; gap: 10px;
+        animation: fadeInUp 0.4s both;
     }
+    .wa-contact-item {
+        background: white; color: #333; padding: 12px 20px; border-radius: 50px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-decoration: none;
+        display: flex; align-items: center; gap: 12px; font-family: 'Cairo', sans-serif;
+        font-size: 13px; font-weight: 600; border: 1px solid #eee; transition: 0.3s;
+    }
+    .wa-contact-item:hover { transform: translateX(-10px); background: var(--accent-gold); color: white; }
+    .wa-main-btn {
+        width: 60px; height: 60px; background: var(--whatsapp-green); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; color: white;
+        font-size: 30px; cursor: pointer; box-shadow: 0 10px 20px rgba(37,211,102,0.3);
+    }
+    .wa-float-container.active .wa-contact-list { display: flex; }
 
+    /* --- Responsive Fixes --- */
     @media (max-width: 768px) {
-        .cart-wrapper { padding-top: 120px; }
-        .cart-container { padding: 40px 20px; }
-        .item-img { width: 80px; height: 100px; }
-        .total-price { font-size: 2rem; }
-        .item-detail { gap: 15px; }
+        .cart-wrapper { padding: 120px 15px 50px; }
+        .cart-container { padding: 30px 20px; }
+        .cart-table thead { display: none; }
+        .cart-item td { display: block; width: 100%; padding: 15px 0; border: none; }
+        .item-detail { align-items: flex-start; }
+        .item-img { width: 90px; height: 115px; }
+        .cart-item { display: block; border-bottom: 1px solid var(--border-luxury); position: relative; }
+        .desktop-only { display: none; }
+        .btn-remove { position: absolute; top: 15px; right: 0; }
+        .cart-summary { align-items: center; width: 100%; }
+        .checkout-btn { width: 100%; text-align: center; }
+        .mobile-price { display: block; color: var(--accent-gold); font-weight: 700; margin-top: 10px; }
     }
 </style>
 
@@ -206,18 +179,18 @@
     <div class="cart-container-outer animate__animated animate__fadeIn">
         <div class="cart-container">
             <div class="cart-header">
-                <h2>Boutique <span style="color: var(--accent-gold);">Bag</span></h2>
-                <span style="font-size: 11px; letter-spacing: 2px; color: var(--text-dim); font-weight: 600;">{{ cart_items|length }} SELECTIONS</span>
+                <h2>حقيبة <span style="color: var(--accent-gold);">المشتريات</span></h2>
+                <span style="font-size: 10px; letter-spacing: 2px; color: var(--text-dim);">{{ cart_items|length }} قطع</span>
             </div>
 
             {% if cart_items %}
             <table class="cart-table">
                 <thead>
                     <tr>
-                        <th>Selection</th>
-                        <th class="desktop-only">Price</th>
-                        <th>Quantity</th>
-                        <th class="desktop-only">Subtotal</th>
+                        <th>القطعة</th>
+                        <th class="desktop-only">السعر</th>
+                        <th>الكمية</th>
+                        <th class="desktop-only">الإجمالي الفرعي</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -230,15 +203,13 @@
                                 <div class="item-info">
                                     <span class="item-name">{{ item.product.name }}</span>
                                     <span class="item-meta-tag">{{ item.color }} / {{ item.size }}</span>
-                                    <div class="mobile-only" style="display: none; margin-top: 10px; color: var(--accent-gold); font-weight: 600;">
-                                        {{ item.actual_price|floatformat:0 }} LE
-                                    </div>
+                                    <div class="mobile-price" style="display:none;">{{ item.actual_price|floatformat:0 }} ج.م</div>
                                 </div>
                             </div>
                         </td>
 
                         <td class="desktop-only">
-                            <span style="font-size: 15px; font-family: 'Playfair Display', serif;">{{ item.actual_price|floatformat:0 }} LE</span>
+                            <span style="font-family: 'Playfair Display';">{{ item.actual_price|floatformat:0 }} ج.م</span>
                         </td>
 
                         <td>
@@ -249,13 +220,13 @@
                             </div>
                         </td>
 
-                        <td class="desktop-only" style="color: var(--accent-gold); font-weight: 600; font-family: 'Playfair Display', serif; font-size: 1.1rem;">
-                            {{ item.subtotal|floatformat:0 }} LE
+                        <td class="desktop-only" style="color: var(--accent-gold); font-weight: 600;">
+                            {{ item.subtotal|floatformat:0 }} ج.م
                         </td>
 
                         <td style="text-align: right;">
-                            <a href="{% url 'remove_from_cart' item.item_key %}" class="btn-remove">
-                                Dismiss
+                            <a href="{% url 'remove_from_cart' item.item_key %}" class="btn-remove" title="إزالة">
+                                <i class="fa-solid fa-trash-can"></i>
                             </a>
                         </td>
                     </tr>
@@ -265,47 +236,65 @@
 
             <div class="cart-summary">
                 <div class="total-price">
-                    <span style="font-size: 11px; vertical-align: middle; color: var(--text-dim); margin-right: 20px; letter-spacing: 3px; font-family: 'Montserrat', sans-serif; font-weight: 700;">TOTAL</span>
-                    {{ total_price|floatformat:0 }} LE
+                    <span style="font-size: 10px; color: var(--text-dim); letter-spacing: 4px; font-family: 'Montserrat';">الإجمالي الكلي</span><br>
+                    <span style="color: var(--accent-gold);">{{ total_price|floatformat:0 }}</span> ج.م
                 </div>
-                <a href="{% url 'checkout' %}" class="checkout-btn">Proceed to Secure Checkout</a>
+                <a href="{% url 'checkout' %}" class="checkout-btn">المتابعة لإتمام الدفع الآمن</a>
             </div>
             
             {% else %}
-            <div class="empty-cart-msg">
-                <p style="color: var(--text-dim); font-size: 0.85rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 40px;">Your boutique bag is currently empty</p>
-                <a href="{% url 'shop' %}" class="checkout-btn">Explore Collections</a>
+            <div class="empty-cart-msg animate__animated animate__fadeInUp" style="text-align: center;">
+                <i class="fa-solid fa-bag-shopping" style="font-size: 3rem; color: var(--border-luxury); margin-bottom: 20px;"></i>
+                <p style="color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;">حقيبة المشتريات فارغة</p>
+                <a href="{% url 'shop' %}" class="checkout-btn" style="display:inline-block; margin-top: 30px;">اكتشف مجموعتنا</a>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<style>
-    @media (min-width: 769px) { .desktop-only { display: table-cell; } }
-    @media (max-width: 768px) {
-        .desktop-only { display: none !important; }
-        .mobile-only { display: block !important; }
-    }
-</style>
+<div class="wa-float-container" id="waContainer">
+    <div class="wa-contact-list">
+        <a href="https://wa.me/201020304907?text=استفسار بخصوص سلة المشتريات" target="_blank" class="wa-contact-item">
+            <span>مبيعات / استفسارات 1</span>
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+        <a href="https://wa.me/201080504973?text=استفسار بخصوص سلة المشتريات" target="_blank" class="wa-contact-item">
+            <span>مبيعات / استفسارات 2</span>
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+    </div>
+    <div class="wa-main-btn" onclick="document.getElementById('waContainer').classList.toggle('active')">
+        <i class="fa-brands fa-whatsapp"></i>
+    </div>
+</div>
 
 <script>
-  // Google Analytics Tracking (GA4)
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'view_cart', {
-      value: {{ total_price }},
-      currency: 'EGP',
-      items: [
-        {% for item in cart_items %}
-        {
-          item_id: '{{ item.product.id }}',
-          item_name: '{{ item.product.name }}',
-          price: {{ item.actual_price }},
-          quantity: {{ item.quantity }}
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-      ]
+    // إغلاق قائمة الواتساب عند النقر في أي مكان آخر
+    document.addEventListener('click', (e) => {
+        const container = document.getElementById('waContainer');
+        if (!container.contains(e.target)) {
+            container.classList.remove('active');
+        }
     });
-  }
+
+    // Google Analytics (GA4)
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'view_cart', {
+            value: {{ total_price|default:0 }},
+            currency: 'EGP',
+            items: [
+                {% for item in cart_items %}
+                {
+                    item_id: '{{ item.product.id }}',
+                    item_name: '{{ item.product.name }}',
+                    price: {{ item.actual_price }},
+                    quantity: {{ item.quantity }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        });
+    }
 </script>
+
 {% endblock %}

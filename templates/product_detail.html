@@ -246,7 +246,7 @@
                 <div class="description">{{ product.description }}</div>
 
                 <div class="action-btns">
-                    <button id="add-to-cart-btn" class="btn-primary">إضافة إلى الحقيبة</button>
+                    <button id="add-to-cart-btn" class="btn-primary">إضافة إلى السله</button>
                     <a href="{% url 'shop' %}" class="btn-back">العودة إلى المتجر</a>
                 </div>
             </div>
@@ -331,7 +331,7 @@
 
         if (selColor && selSize && !isOut) {
             btn.classList.remove('btn-disabled');
-            btn.innerText = "إضافة إلى الحقيبة";
+            btn.innerText = "إضافة إلى السله";
         } else {
             btn.classList.add('btn-disabled');
             btn.innerText = isOut ? "غير متوفر" : "اختر اللون والمقاس";
@@ -344,7 +344,7 @@
             toast.classList.add('active');
             setTimeout(() => {
                 window.location.href = `/add-to-cart/${productId}/?color=${encodeURIComponent(selColor)}&size=${encodeURIComponent(selSize)}`;
-            }, 800);
+            }, 3000);
         }
     });
 
