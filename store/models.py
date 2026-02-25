@@ -98,7 +98,10 @@ class ProductVariant(models.Model):
         size=[800, 1000], quality=75, upload_to='variants/', 
         force_format='WEBP', crop=['middle', 'center']
     )
-
+    @property
+    def total_stock(self):
+        """حساب مجموع المخزن لكل المقاسات التابعة لهذا اللون"""
+        return self.sizes.aggregate(total=models.Sum('stock'))['total'] or 0
     def __str__(self):
         return f"{self.product.name} - {self.color_name}"
 
