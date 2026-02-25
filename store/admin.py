@@ -58,7 +58,6 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
     )
     readonly_fields = ['stock']
 
-    # ربط ملف CSS المخصص
     class Media:
         css = {
             'all': ('css/admin_custom.css',)
@@ -122,8 +121,27 @@ class ContactMessageAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ['product', 'color', 'size', 'quantity', 'display_item_price']
+    # تم إضافة 'display_item_image' هنا لعرض صورة المنتج
+    readonly_fields = ['display_item_image', 'product', 'color', 'size', 'quantity', 'display_item_price']
+    fields = ['display_item_image', 'product', 'color', 'size', 'quantity', 'display_item_price']
     can_delete = False
+
+    def display_item_image(self, obj):
+        """جلب صورة المنتج بناءً على اللون المختار في الطلب"""
+        if obj.product:
+            # البحث عن الـ Variant الذي يطابق اللون المكتوب في الطلب
+            variant = obj.product.variants.filter(color_name=obj.color).first()
+            if variant and variant.variant_image:
+                return format_html('<img src="{}" style="width: 60px; height: 60px; border-radius: 5px; object-fit: cover; border: 1px solid #ddd;" />', variant.variant_image.url)
+            
+            # إذا لم يجد اللون، يعرض أول صورة متاحة للمنتج
+            first_variant = obj.product.variants.first()
+            if first_variant and first_variant.variant_image:
+                return format_html('<img src="{}" style="width: 60px; height: 60px; border-radius: 5px; object-fit: cover; opacity: 0.6;" />', first_variant.variant_image.url)
+                
+        return format_html('<div style="width: 60px; height: 60px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 5px; color: #ccc; font-size: 10px;">No Image</div>')
+    
+    display_item_image.short_description = 'Item Preview'
 
     def display_item_price(self, obj):
         return int(obj.price_at_purchase) if obj.price_at_purchase else 0
