@@ -35,7 +35,7 @@
     .stat-card { 
         background: var(--card-white); 
         border: 1px solid var(--border-luxury);
-        border-radius: 0; /* تصميم حاد وأنيق */
+        border-radius: 0; 
         padding: 30px; 
         text-align: center; 
         transition: all 0.5s var(--luxury-ease);
@@ -84,7 +84,7 @@
     
     td { padding: 20px; vertical-align: middle; font-size: 14px; }
 
-    .product-img { width: 60px; height: 75px; object-fit: cover; border: 1px solid var(--border-luxury); }
+    .product-img { width: 60px; height: 75px; object-fit: cover; border: 1px solid var(--border-luxury); background: #f9f9f9; }
     .img-stack { position: relative; width: 60px; }
     .color-preview-small { 
         position: absolute; bottom: -5px; right: -5px; width: 18px; height: 18px; 
@@ -174,7 +174,7 @@
                         <td>
                             <div class="img-stack">
                                 {% with first_variant=product.variants.first %}
-                                    <img src="{% if first_variant and first_variant.variant_image %}{{ first_variant.variant_image.url }}{% else %}{{ product.main_image.url }}{% endif %}" class="product-img">
+                                    <img src="{% if first_variant and first_variant.variant_image %}{{ first_variant.variant_image.url }}{% elif product.main_image %}{{ product.main_image.url }}{% endif %}" class="product-img" onerror="this.src='https://via.placeholder.com/60x75?text=No+Img'">
                                     {% if first_variant %}<div class="color-preview-small" style="background: {{ first_variant.color_code }};"></div>{% endif %}
                                 {% endwith %}
                             </div>
@@ -232,8 +232,11 @@
                                             {% csrf_token %}
                                             <input type="hidden" name="action" id="action-{{ item.id }}" value="update">
                                             <div style="display: flex; align-items: center; gap: 20px;">
-                                                <img src="{% if item.product and item.product.main_image %}{{ item.product.main_image.url }}{% else %}/static/images/default.jpg{% endif %}" 
-                                                     style="width: 50px; height: 60px; object-fit: cover; border: 1px solid var(--border-luxury);">
+                                                <div style="width: 50px; height: 60px; background: #eee; overflow: hidden; border: 1px solid var(--border-luxury);">
+                                                    <img src="{% if item.product.main_image %}{{ item.product.main_image.url }}{% endif %}" 
+                                                         style="width: 100%; height: 100%; object-fit: cover;"
+                                                         onerror="this.src='https://via.placeholder.com/50x60?text=Error'">
+                                                </div>
                                                 <div>
                                                     <div style="font-weight: 600;">{{ item.product.name }}</div>
                                                     <small style="color: var(--text-dim)">{{ item.color }} | Size: {{ item.size }}</small>
@@ -343,7 +346,6 @@
         const row = document.getElementById(rowId);
         const isVisible = row.style.display === 'table-row' || row.style.display === 'block';
         
-        // إغلاق الصفوف المفتوحة في نفس القسم
         const prefix = rowId.split('-')[0];
         document.querySelectorAll(`[id^='${prefix}-']`).forEach(r => { 
             r.style.display = 'none'; 
