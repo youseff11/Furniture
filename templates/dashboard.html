@@ -108,6 +108,7 @@
         transition: all 0.4s var(--luxury-ease);
         text-decoration: none;
         display: inline-flex; align-items: center; gap: 10px;
+        cursor: pointer;
     }
     .btn-main:hover, .btn-add:hover { background: var(--accent-gold); color: #fff !important; }
 
@@ -231,7 +232,9 @@
                                             {% csrf_token %}
                                             <input type="hidden" name="action" id="action-{{ item.id }}" value="update">
                                             <div style="display: flex; align-items: center; gap: 20px;">
-                                               <img src="{{ item.product.main_image }}" style="width: 50px; height: 60px; object-fit: cover;">
+                                                <img src="{% if item.product and item.product.main_image %}{{ item.product.main_image.url }}{% else %}/static/images/default.jpg{% endif %}" 
+                                                     style="width: 50px; height: 60px; object-fit: cover; border: 1px solid var(--border-luxury);">
+                                                <div>
                                                     <div style="font-weight: 600;">{{ item.product.name }}</div>
                                                     <small style="color: var(--text-dim)">{{ item.color }} | Size: {{ item.size }}</small>
                                                 </div>
@@ -255,6 +258,16 @@
                                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                                 <strong>Total Amount:</strong><span class="final-price">{{ order.total_price|floatformat:0 }} LE</span>
                                             </div>
+                                        </div>
+
+                                        <div class="discount-action" style="margin-top: 20px; padding: 15px; border: 1px dashed var(--accent-gold);">
+                                            <h5 style="font-family: 'Playfair Display'; margin-bottom: 10px; font-size: 14px;">Apply Extra Discount</h5>
+                                            <form method="POST" action="{% url 'apply_order_discount' order.id %}" style="display: flex; gap: 10px;">
+                                                {% csrf_token %}
+                                                <input type="number" name="discount_amount" placeholder="Amount LE" required
+                                                       style="flex: 1; padding: 8px; border: 1px solid var(--border-luxury);">
+                                                <button type="submit" class="btn-main" style="padding: 8px 15px;">Apply</button>
+                                            </form>
                                         </div>
                                     </div>
 

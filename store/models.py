@@ -6,7 +6,6 @@ from django.db.models import Sum
 from django.utils import timezone
 import uuid
 from datetime import timedelta
-# استيراد الحقل الجديد للمعالجة
 from django_resized import ResizedImageField
 
 class Category(models.Model):
@@ -29,7 +28,6 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0, verbose_name="Total Stock Quantity", editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    # الحقول الجديدة للتحكم في حالة "وصل حديثاً"
     is_new_arrival = models.BooleanField(default=False, verbose_name="New Arrival?")
     new_arrival_updated_at = models.DateTimeField(null=True, blank=True, editable=False)
 
@@ -37,7 +35,6 @@ class Product(models.Model):
         return f"{self.name} ({self.sku if self.sku else 'No SKU'})"
 
     def save(self, *args, **kwargs):
-        # منطق تحديث تاريخ التفعيل لـ New Arrival
         if self.pk:
             old_instance = Product.objects.filter(pk=self.pk).first()
             if old_instance and self.is_new_arrival and not old_instance.is_new_arrival:
@@ -48,7 +45,6 @@ class Product(models.Model):
             if self.is_new_arrival:
                 self.new_arrival_updated_at = timezone.now()
 
-        # منطق الـ SKU الأصلي الخاص بك
         if not self.sku:
             prefix = self.name[:3].upper() if self.name else "PRD"
             unique_id = str(uuid.uuid4().hex[:6].upper())
@@ -57,12 +53,12 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def update_total_stock(self):
+        """تحديث إجمالي المخزون للمنتج"""
         total = ProductSize.objects.filter(variant__product=self).aggregate(total=Sum('stock'))['total'] or 0
         Product.objects.filter(pk=self.pk).update(stock=total)
 
     @property
     def is_new(self):
-        # إذا لم يتم تفعيل الخيار أو مر عليه أكثر من 7 أيام يختفي
         if self.is_new_arrival and self.new_arrival_updated_at:
             expiry_date = self.new_arrival_updated_at + timedelta(days=7)
             return timezone.now() < expiry_date
@@ -91,7 +87,6 @@ class ProductVariant(models.Model):
     color_name = models.CharField(max_length=50)
     color_code = ColorField(default='#FF0000') 
     
-    # التعديل: إجبار الفورمات لـ WEBP وتقليل الجودة لـ 70 لضغط احترافي
     variant_image = ResizedImageField(
         size=[800, 1000], 
         quality=70, 
@@ -105,17 +100,11 @@ class ProductVariant(models.Model):
     def total_stock(self):
         return self.sizes.aggregate(total=Sum('stock'))['total'] or 0
 
-    @property
-    def total_variant_stock(self):
-        return self.total_stock 
-
     def __str__(self):
         return f"{self.product.name} - {self.color_name}"
 
 class ProductImage(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='additional_images')
-    
-    # التعديل: تطبيق نفس ضغط الـ WEBP على الصور الإضافية
     image = ResizedImageField(
         size=[800, 1000], 
         quality=70, 
@@ -137,8 +126,8 @@ class ProductSize(models.Model):
         return f"{self.variant.product.name} - {self.variant.color_name} - {self.size_name}"
 
     def save(self, *args, **kwargs):
+        # تم إزالة update_total_stock من هنا لتسريع عملية الرفع الجماعي
         super().save(*args, **kwargs)
-        self.variant.product.update_total_stock()
 
     def delete(self, *args, **kwargs):
         product = self.variant.product
@@ -171,13 +160,10 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.id} - {self.name}"
 
-    # --- وظائف حسابية جديدة للعرض في لوحة التحكم ---
     def get_items_total(self):
-        """يحسب مجموع المنتجات قبل أي خصم إضافي"""
         return sum(item.subtotal for item in self.items.all())
 
     def get_discount_amount(self):
-        """يحسب الفرق بين مجموع المنتجات والسعر النهائي (قيمة الخصم)"""
         total_before = self.get_items_total()
         discount = total_before - self.total_price
         return discount if discount > 0 else 0
@@ -191,7 +177,6 @@ class Order(models.Model):
         self.__original_status = self.status
 
     def send_status_notification(self):
-        # ... (نفس كود الإرسال الخاص بك دون تغيير)
         subject = f"Ice Club Store - Order #{self.id} Update"
         messages_map = {
             'Shipped': "Great news! Your order is now on its way to you. 🚚",

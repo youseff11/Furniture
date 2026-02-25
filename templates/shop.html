@@ -285,7 +285,7 @@
             {% endif %}
 
             <div class="product-card__image-wrap" id="img-wrap-{{ product.id }}">
-                <img src="{{ product.main_image.url }}" class="main-product-img" id="img-{{ product.id }}" loading="lazy">
+                <img src="{{ product.main_image }}" class="main-product-img" id="img-{{ product.id }}" loading="lazy">
                 
                 <div class="image-nav-arrows" id="arrows-{{ product.id }}">
                     <button class="nav-arrow prev" onclick="changeExtraImage('{{ product.id }}', -1, event)">❮</button>
@@ -294,12 +294,12 @@
             </div>
 
             <div class="color-options">
-                {% for v in product.variants.all|dictsortreversed:"total_variant_stock" %}
-                <div class="color-dot {% if v.total_variant_stock == 0 %}is-sold-out-dot{% endif %}" 
+                {% for v in product.variants.all|dictsortreversed:"total_stock" %}
+                <div class="color-dot {% if v.total_stock == 0 %}is-sold-out-dot{% endif %}" 
                      style="background: {{ v.color_code }};" 
                      data-image="{{ v.variant_image.url }}" 
                      data-extra-images="{% for extra in v.additional_images.all %}{{ extra.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                     data-variant-stock="{{ v.total_variant_stock }}" 
+                     data-variant-stock="{{ v.total_stock }}" 
                      onclick="updateVariant(this, '{{ product.id }}')">
                 </div>
                 {% endfor %}

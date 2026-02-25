@@ -17,65 +17,9 @@ from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.db import connection
 from django.db.models import Case, When, Value, IntegerField
-from django.contrib import messages
 from decimal import Decimal
-FB_PIXEL_ID = '792214427202379'  
-FB_ACCESS_TOKEN = 'EAAXY0i6ZArdwBQUwZAq4Mx7ArysubuZAELX8l1XnZBVA1gqWwklibClR6Hrw5Ves0DhZCK5SjjtrqwZAfWeX6yZBCmzsqNlUlW4cwTk4NQFHcCqT2rKPxfPLKMbr6DxvK4Gg0XlNqJGhBVTWqvgQR92MvT9CamOHpNDiUQ2X7bDc7s3LxXQZB6I9vSKs9R8u0ZCWv8gZDZD'
-FB_API_VERSION = 'v18.0'
 
-def send_fb_capi_event(request, event_name, event_id=None, user_data=None, custom_data=None):
-    url = f"https://graph.facebook.com/{FB_API_VERSION}/{FB_PIXEL_ID}/events"
-    
-    if not event_id:
-        event_id = f"server_{int(time.time())}_{hashlib.md5(request.META.get('HTTP_USER_AGENT', '').encode()).hexdigest()[:6]}"
-
-    payload_user_data = {
-        "client_ip_address": request.META.get('REMOTE_ADDR'),
-        "client_user_agent": request.META.get('HTTP_USER_AGENT'),
-    }
-    
-    if user_data:
-        for key, value in user_data.items():
-            if value:
-                payload_user_data[key] = hashlib.sha256(str(value).lower().strip().encode()).hexdigest()
-
-    data = {
-        "data": [
-            {
-                "event_name": event_name,
-                "event_id": event_id,  
-                "event_time": int(time.time()),
-                "action_source": "website",
-                "event_source_url": request.build_absolute_uri(),
-                "user_data": payload_user_data,
-                "custom_data": custom_data or {}
-            }
-        ],
-        "access_token": FB_ACCESS_TOKEN
-    }
-
-    try:
-        requests.post(url, json=data)
-    except Exception as e:
-        print(f"Facebook CAPI Error: {e}")
-
-VariantFormSet = inlineformset_factory(
-    Product, 
-    ProductVariant, 
-    fields=['color_name', 'color_code', 'variant_image'],
-    extra=3, 
-    can_delete=True,
-    widgets={
-        'color_code': forms.TextInput(attrs={
-            'type': 'color', 
-            'class': 'form-control'
-        }),
-        'color_name': forms.TextInput(attrs={
-            'placeholder': 'e.g. Black', 
-            'class': 'form-control'
-        }),
-    }
-)
+# --- Views ---
 
 def home(request):
     return render(request, 'home.html')
@@ -109,18 +53,6 @@ def shop_view(request, category_slug=None):
 
 def product_detail(request, id):
     product = get_object_or_404(Product, id=id)    
-    price = float(product.discount_price if product.discount_price else product.price)
-    send_fb_capi_event(
-        request, 
-        "ViewContent", 
-        custom_data={
-            "content_ids": [str(product.id)],
-            "content_name": product.name,
-            "content_type": "product",
-            "value": price,
-            "currency": "EGP"
-        }
-    )
     return render(request, 'product_detail.html', {'product': product})
 
 def contact_view(request):
@@ -160,10 +92,10 @@ def add_to_cart(request, product_id):
         user_cart_key = f"cart_{request.user.id}"
     else:
         user_cart_key = "cart_guest"
+        
     cart = request.session.get(user_cart_key, {})
     selected_color = request.GET.get('color', 'Default') 
     selected_size = request.GET.get('size', 'N/A')    
-    e_id = request.GET.get('eid')    
     item_key = f"{product_id}_{selected_color}_{selected_size}"
     
     try:
@@ -185,22 +117,6 @@ def add_to_cart(request, product_id):
                     'color': selected_color,
                     'size': selected_size
                 }
-            
-            product = get_object_or_404(Product, id=product_id)
-            price = float(product.discount_price if product.discount_price else product.price)    
-            
-            send_fb_capi_event(
-                request, 
-                "AddToCart", 
-                event_id=e_id,
-                custom_data={
-                    "content_ids": [str(product_id)],
-                    "content_name": product.name,
-                    "content_type": "product",
-                    "value": price,
-                    "currency": "EGP"
-                }
-            )
             
             request.session[user_cart_key] = cart
             request.session.modified = True
@@ -270,7 +186,7 @@ def update_cart(request, item_key, action):
             item_data = cart[item_key]
             product_id = item_data['product_id']
             color = item_data['color']
-            size_val = item_data['size'] # القيمة المخزنة في السيشن
+            size_val = item_data['size']
             
             try:
                 stock_item = ProductSize.objects.get(
@@ -310,9 +226,6 @@ def remove_from_cart(request, item_key):
     return redirect('cart_view')
 
 def checkout_abuyhia(request):
-    """
-    دالة إتمام الشراء الخاصة بمتجر أبو يحيى للأثاث
-    """
     if request.user.is_authenticated:
         user_cart_key = f"cart_{request.user.id}"
     else:
@@ -327,7 +240,6 @@ def checkout_abuyhia(request):
     total_price = 0
     checkout_items = []
     
-    # التحقق من المخزون وحساب الإجمالي
     for item_key, item_data in cart.items():
         product = get_object_or_404(Product, id=item_data['product_id'])
         color_name = item_data.get('color')
@@ -369,16 +281,6 @@ def checkout_abuyhia(request):
             'image_url': image_url
         })
 
-    # إرسال حدث بدء الدفع لفيسبوك (اختياري)
-    if request.method == 'GET' and total_price > 0:
-        try:
-            send_fb_capi_event(
-                request, 
-                "InitiateCheckout", 
-                custom_data={"value": float(total_price), "currency": "EGP"}
-            )
-        except: pass
-
     if request.method == 'POST':
         name = request.POST.get('name')
         email = request.POST.get('email')
@@ -386,7 +288,6 @@ def checkout_abuyhia(request):
         governorate = request.POST.get('governorate')
         address = request.POST.get('address')
 
-        # إنشاء الطلب في قاعدة البيانات
         order = Order.objects.create(
             name=name, email=email, phone=phone,
             governorate=governorate, address=address,
@@ -396,22 +297,6 @@ def checkout_abuyhia(request):
         if request.user.is_authenticated:
             order.user = request.user
             order.save()
-
-        # إرسال حدث الشراء الناجح لفيسبوك
-        try:
-            send_fb_capi_event(
-                request, 
-                "Purchase", 
-                event_id=str(order.id), 
-                user_data={"em": email, "ph": phone},
-                custom_data={
-                    "value": float(total_price), 
-                    "currency": "EGP", 
-                    "order_id": str(order.id),
-                    "content_type": "product",
-                }
-            )
-        except: pass
 
         email_items_html = ""
         for item in checkout_items:
@@ -424,13 +309,11 @@ def checkout_abuyhia(request):
             img = item['image_url']
             sku = product.sku if hasattr(product, 'sku') and product.sku else "N/A"
 
-            # إنشاء عناصر الطلب
             OrderItem.objects.create(
                 order=order, product=product, color=color, size=size,
                 quantity=qty, price_at_purchase=price_each
             )
 
-            # بناء صفوف المنتجات في الإيميل
             email_items_html += f"""
                 <tr>
                     <td style="padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; text-align:right;" dir="rtl">
@@ -446,7 +329,6 @@ def checkout_abuyhia(request):
                 </tr>
             """
 
-            # تحديث المخزون
             if variant_size:
                 variant_size.stock -= qty
                 variant_size.save()
@@ -454,7 +336,6 @@ def checkout_abuyhia(request):
                 product.stock -= qty
                 product.save()
 
-        # رسالة البريد الإلكتروني بتصميم "أبو يحيى للأثاث"
         html_message = f"""
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2d1b0; border-radius: 15px; overflow: hidden; background-color: #ffffff; text-align: right;">
             <div style="background: linear-gradient(135deg, #c5a059 0%, #b8860b 100%); color: #ffffff; padding: 30px; text-align: center;">
@@ -509,7 +390,6 @@ def checkout_abuyhia(request):
         except:
             pass
 
-        # تفريغ السلة بعد نجاح العملية
         request.session[user_cart_key] = {}
         request.session.modified = True
         return render(request, 'order_success.html', {'order': order})
@@ -525,7 +405,6 @@ def dashboard_view(request):
     products = Product.objects.all().order_by('-created_at')
     messages_list = ContactMessage.objects.all().order_by('-created_at')
     
-    # حساب الإجمالي فقط للطلبات المكتملة
     total_revenue = sum(order.total_price for order in orders if order.status == 'Delivered')
     
     context = {
@@ -540,6 +419,9 @@ def dashboard_view(request):
         'total_revenue': total_revenue,
     }
     return render(request, 'dashboard.html', context)
+
+# ... (بقية دوال الإدارة والمنتجات بقيت كما هي دون تغيير) ...
+
 @user_passes_test(is_admin, login_url='login')
 def add_product(request):
     if request.method == 'POST':
@@ -655,29 +537,25 @@ def update_order_status(request, order_id):
             messages.error(request, f'Error: {new_status} is not a valid status.')
             
     return redirect('dashboard')
+
 @user_passes_test(is_admin, login_url='login')
 def update_item_quantity(request, item_id):
     if request.method == 'POST':
         item = get_object_or_404(OrderItem, id=item_id)
         order = item.order
-        # استقبال الأكشن من الفورم (سواء كان تحديث أو حذف)
         action = request.POST.get('action', 'update') 
         product_name = item.product.name if item.product else "منتج غير مسمى"
 
         if action == 'delete':
-            # 1. منطق الحذف
             item.delete()
-            
-            # التحقق: إذا كان هذا آخر منتج في الطلب، نقوم بإلغاء الطلب أو حذفه
             if not order.items.exists():
-                order.status = 'Canceled' # أو order.delete() حسب رغبتك
+                order.status = 'Canceled'
                 order.total_price = 0
                 order.save()
                 messages.warning(request, f'تم حذف المنتج الأخير، لذا تم تحويل حالة الطلب #{order.id} إلى "ملغي".')
                 subject = f"Order #{order.id} Canceled - Ice Club"
                 email_content = f"Hi {order.name},\n\nYour order has been canceled because all items were removed."
             else:
-                # تحديث إجمالي السعر بعد حذف عنصر واحد وبقاء آخرين
                 new_total = sum(i.quantity * i.price_at_purchase for i in order.items.all())
                 order.total_price = new_total
                 order.save()
@@ -686,30 +564,25 @@ def update_item_quantity(request, item_id):
                 email_content = f"Hi {order.name},\n\nThe item ({product_name}) has been removed from your order as requested.\nNew Total: {order.total_price} EGP"
         
         else:
-            # 2. منطق التحديث (Update)
             new_qty = int(request.POST.get('quantity', 1))
             if new_qty > 0:
                 old_qty = item.quantity
                 item.quantity = new_qty
                 item.save()
-                
-                # تحديث السعر الإجمالي للطلب
                 new_total = sum(Decimal(str(i.quantity * i.price_at_purchase)) for i in order.items.all())
                 order.total_price = new_total
                 order.save()
-                
                 messages.success(request, f'تم تحديث كمية {product_name} بنجاح.')
                 subject = f"Order Update: Quantity Changed for #{order.id}"
                 email_content = f"Hi {order.name},\n\nThe quantity of ({product_name}) was updated from {old_qty} to {new_qty}.\nNew Total: {order.total_price} EGP"
             else:
-                messages.error(request, 'الكمية يجب أن تكون 1 على الأقل. يمكنك حذف المنتج بدلاً من ذلك.')
+                messages.error(request, 'الكمية يجب أن تكون 1 على الأقل.')
                 return redirect('dashboard')
 
-        # 3. إرسال الإيميل (مشترك للحالتين)
         try:
             send_mail(subject, email_content, settings.EMAIL_HOST_USER, [order.email], fail_silently=True)
-        except Exception as e:
-            print(f"Email failed: {e}")
+        except:
+            pass
     return redirect('dashboard')
     
 @user_passes_test(is_admin, login_url='login')
@@ -717,59 +590,28 @@ def apply_order_discount(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(Order, id=order_id)
         discount_input = request.POST.get('discount_amount', '0')
-        
         try:
-            # Convert to Decimal to match total_price type
             discount_amount = Decimal(discount_input)
-        except (ValueError, TypeError):
+        except:
             discount_amount = Decimal('0')
 
         if discount_amount >= 0:
-            # Recalculate original total before applying the discount
             original_total = sum(Decimal(str(i.quantity * i.price_at_purchase)) for i in order.items.all())
-            
             if discount_amount <= original_total:
-                # Update the total price in the database
                 order.total_price = original_total - discount_amount
                 order.save()
                 
-                # Prepare the email content with "Before" and "After" pricing
                 subject = f"Update on your Order #{order.id} - Ice Club Store"
-                
-                message = f"""
-                Hello {order.name},
-                
-                We have great news! A special discount has been applied to your order.
-                
-                Price Breakdown:
-                ---------------------------
-                Subtotal: {original_total} EGP
-                Discount Applied: - {discount_amount} EGP
-                ---------------------------
-                New Grand Total: {order.total_price} EGP
-                
-                We hope you enjoy your purchase!
-                Thank you for shopping with Ice Club Store.
-                """
-                
+                message = f"Hello {order.name},\nA discount of {discount_amount} EGP has been applied.\nNew Total: {order.total_price} EGP"
                 try:
-                    send_mail(
-                        subject, 
-                        message, 
-                        settings.EMAIL_HOST_USER, 
-                        [order.email], 
-                        fail_silently=True
-                    )
-                except Exception as e:
-                    print(f"Email failed: {e}")
-
-                messages.success(request, f'Discount of {discount_amount} EGP applied. Client notified via email.')
+                    send_mail(subject, message, settings.EMAIL_HOST_USER, [order.email], fail_silently=True)
+                except:
+                    pass
+                messages.success(request, f'Discount of {discount_amount} EGP applied.')
             else:
-                messages.error(request, 'Discount cannot exceed the order total.')
-        else:
-            messages.error(request, 'Invalid discount amount.')
-            
+                messages.error(request, 'Discount too high.')
     return redirect('dashboard')
+
 def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -801,26 +643,11 @@ def about_view(request):
     return render(request, 'about.html')
 
 def offers_view(request):
-    products = Product.objects.filter(
-        discount_price__gt=0
-    ).annotate(
-        is_available_group=Case(
-            When(stock__gt=0, then=Value(0)),
-            default=Value(1),
-            output_field=IntegerField(),
-        ),
-        manual_new_priority=Case(
-            When(is_new_arrival=True, then=Value(1)),
-            default=Value(0),
-            output_field=IntegerField(),
-        )
+    products = Product.objects.filter(discount_price__gt=0).annotate(
+        is_available_group=Case(When(stock__gt=0, then=Value(0)), default=Value(1), output_field=IntegerField()),
+        manual_new_priority=Case(When(is_new_arrival=True, then=Value(1)), default=Value(0), output_field=IntegerField())
     ).order_by('is_available_group', '-manual_new_priority', '-created_at')
-
-    context = {
-        'products': products,
-        'title': 'Exclusive Offers'
-    }
-    return render(request, 'offers.html', context)
+    return render(request, 'offers.html', {'products': products, 'title': 'Exclusive Offers'})
 
 def policies(request):
     return render(request, 'policies.html')
@@ -831,9 +658,7 @@ def reset_orders(request):
             Order.objects.all().delete()            
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM sqlite_sequence WHERE name='store_order'")
-            
             messages.success(request, "All Orders Are Deleted")
         except Exception as e:
             messages.error(request, f"Error resetting orders: {e}")
-            
     return redirect('dashboard')

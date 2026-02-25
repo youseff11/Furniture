@@ -289,7 +289,7 @@
             {% endif %}
 
             <div class="img-container" id="cont-{{ product.id }}">
-                <img src="{{ product.main_image.url }}" alt="{{ product.name }}" id="img-{{ product.id }}" loading="lazy">
+                <img src="{{ product.main_image }}" alt="{{ product.name }}" id="img-{{ product.id }}" loading="lazy">
                 <div class="image-nav-arrows" id="arrows-{{ product.id }}">
                     <button class="nav-arrow prev" onclick="changeImg('{{ product.id }}', -1, event)">❯</button>
                     <button class="nav-arrow next" onclick="changeImg('{{ product.id }}', 1, event)">❮</button>
@@ -299,10 +299,10 @@
             <h3 style="font-family: var(--font-arabic-heading); font-size: 22px; font-weight: 700; margin: 0 0 12px; text-align: center; color: #1a1a1a;">{{ product.name }}</h3>
 
             <div class="color-swatches">
-                {% for v in product.variants.all|dictsortreversed:"total_variant_stock" %}
-                <div class="swatch {% if v.total_variant_stock == 0 %}is-sold-out-swatch{% endif %}" 
+                {% for v in product.variants.all|dictsortreversed:"total_stock" %}
+                <div class="swatch {% if v.total_stock == 0 %}is-sold-out-swatch{% endif %}" 
                      style="background: {{ v.color_code }};" title="{{ v.color_name }}"
-                     data-image="{{ v.variant_image.url }}" data-stock="{{ v.total_variant_stock }}" 
+                     data-image="{{ v.variant_image.url }}" data-stock="{{ v.total_stock }}" 
                      data-extra="{% for ex in v.additional_images.all %}{{ ex.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}"
                      onclick="updateOffer('{{ product.id }}', this)">
                 </div>
@@ -327,7 +327,7 @@
 <script>
     document.addEventListener('click', (e) => {
         const container = document.getElementById('waContainer');
-        if (!container.contains(e.target)) {
+        if (container && !container.contains(e.target)) {
             container.classList.remove('active');
         }
     });
