@@ -135,7 +135,7 @@
     }
     .dropdown-content a:hover { background: #fdfaf3; color: var(--accent-gold); }
 
-    /* --- Product Grid & Cards --- */
+    /* --- Product Grid --- */
     .product-grid { 
         display: grid; 
         grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
@@ -178,7 +178,7 @@
     }
     .product-card:hover .main-product-img { transform: scale(1.05); }
 
-    /* تم التعديل: إزالة الـ grayscale والـ opacity المنخفضة لضمان بقاء الألوان طبيعية */
+    /* بقاء الألوان طبيعية */
     .is-sold-out img { 
         opacity: 1 !important; 
         filter: none !important; 
@@ -300,7 +300,7 @@
                     <script type="application/json" class="variant-data">
                         {
                             "images": ["{{ v.variant_image.url }}"{% for extra in v.additional_images.all %}, "{{ extra.image.url }}"{% endfor %}],
-                            "stock": {{ v.stock|default:0 }}
+                            "stock": {{ v.total_stock|default:0 }}
                         }
                     </script>
                 </div>
@@ -354,7 +354,8 @@
 
         arrows.style.display = data.images.length > 1 ? 'flex' : 'none';
 
-        if (data.stock <= 0) {
+        // تصحيح: التحقق من المخزن
+        if (parseInt(data.stock) <= 0) {
             wrap.classList.add('is-sold-out');
             ovl.style.display = 'block';
             btn.classList.add('btn-disabled');
