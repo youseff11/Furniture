@@ -1,11 +1,3 @@
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZH9JG248D6"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-ZH9JG248D6');
-</script>
-
 {% extends 'base.html' %}
 {% block content %}
 
@@ -25,7 +17,6 @@
         --transition-smooth: all 0.6s var(--luxury-ease);
         --whatsapp-green: #25D366;
         
-        /* تعريف الخطوط الجديدة */
         --font-arabic-heading: 'Amiri', serif;
         --font-arabic-body: 'IBM Plex Sans Arabic', sans-serif;
         --font-english-heading: 'Playfair Display', serif;
@@ -188,24 +179,25 @@
     .product-card:hover .main-product-img { transform: scale(1.05); }
     .is-sold-out img { opacity: 0.4; filter: grayscale(1); }
 
+    /* New: Navigation Arrows Styling */
     .image-nav-arrows {
         position: absolute; top: 50%; width: 100%; transform: translateY(-50%);
-        display: none; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5;
+        display: none; justify-content: space-between; padding: 0 10px; pointer-events: none; z-index: 5;
     }
     .nav-arrow {
-        background: rgba(255,255,255,0.8); color: #000; border: none; 
-        width: 40px; height: 40px; cursor: pointer; pointer-events: auto;
+        background: rgba(255,255,255,0.7); color: #000; border: none; 
+        width: 35px; height: 35px; border-radius: 50%; cursor: pointer; pointer-events: auto;
         display: flex; align-items: center; justify-content: center; transition: 0.3s;
-        backdrop-filter: blur(5px); font-size: 18px; border-radius: 50%;
+        backdrop-filter: blur(4px); font-size: 14px;
     }
     .nav-arrow:hover { background: var(--accent-gold); color: #fff; }
 
     .color-options { display: flex; gap: 12px; margin-bottom: 20px; justify-content: center; }
     .color-dot { 
-        width: 18px; height: 18px; border-radius: 50%; cursor: pointer; 
-        border: 1px solid rgba(0,0,0,0.1); transition: 0.4s var(--luxury-ease); 
+        width: 22px; height: 22px; border-radius: 50%; cursor: pointer; 
+        border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1); transition: 0.3s var(--luxury-ease); 
     }
-    .color-dot.active { transform: scale(1.5); border-color: var(--accent-gold); }
+    .color-dot.active { transform: scale(1.2); box-shadow: 0 0 0 2px var(--accent-gold); }
 
     .product-card__name { 
         font-family: var(--font-arabic-heading);
@@ -288,19 +280,25 @@
                 <img src="{{ product.main_image }}" class="main-product-img" id="img-{{ product.id }}" loading="lazy">
                 
                 <div class="image-nav-arrows" id="arrows-{{ product.id }}">
-                    <button class="nav-arrow prev" onclick="changeExtraImage('{{ product.id }}', -1, event)">❮</button>
-                    <button class="nav-arrow next" onclick="changeExtraImage('{{ product.id }}', 1, event)">❯</button>
+                    <button class="nav-arrow prev" onclick="changeImage('{{ product.id }}', -1, event)">❮</button>
+                    <button class="nav-arrow next" onclick="changeImage('{{ product.id }}', 1, event)">❯</button>
                 </div>
             </div>
 
             <div class="color-options">
-                {% for v in product.variants.all|dictsortreversed:"total_stock" %}
-                <div class="color-dot {% if v.total_stock == 0 %}is-sold-out-dot{% endif %}" 
+                {% for v in product.variants.all %}
+                <div class="color-dot" 
                      style="background: {{ v.color_code }};" 
-                     data-image="{{ v.variant_image.url }}" 
-                     data-extra-images="{% for extra in v.additional_images.all %}{{ extra.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                     data-variant-stock="{{ v.total_stock }}" 
-                     onclick="updateVariant(this, '{{ product.id }}')">
+                     data-color-name="{{ v.color_name }}"
+                     data-stock="{{ v.stock }}"
+                     onclick="selectVariant(this, '{{ product.id }}')">
+                    
+                    <script type="application/json" class="variant-data">
+                        {
+                            "images": ["{{ v.variant_image.url }}"{% for extra in v.additional_images.all %}, "{{ extra.image.url }}"{% endfor %}],
+                            "stock": {{ v.stock|default:0 }}
+                        }
+                    </script>
                 </div>
                 {% endfor %}
             </div>
@@ -308,7 +306,7 @@
             <h3 class="product-card__name">{{ product.name }}</h3>
             
             <div style="text-align:center;">
-                <span class="current-price">{{ product.discount_price|default:product.price|floatformat:0 }} LE</span>
+                <span class="current-price">{{ product.get_effective_price|floatformat:0 }} LE</span>
                 {% if product.discount_price %}<span class="old-price">{{ product.price|floatformat:0 }} LE</span>{% endif %}
             </div>
 
@@ -324,95 +322,94 @@
 </section>
 
 <script>
-    let productImagesMap = {};
+    // Global map to store current images for each product card
+    let activeImages = {};
 
-    function updateVariant(el, productId) {
-        const card = document.getElementById('prod-' + productId),
-              img = document.getElementById('img-' + productId),
-              imgWrap = document.getElementById('img-wrap-' + productId),
-              ovl = document.getElementById('ovl-' + productId),
-              btn = document.getElementById('btn-' + productId),
-              arrows = document.getElementById('arrows-' + productId),
-              variantStock = parseInt(el.dataset.variantStock);
+    function selectVariant(el, productId) {
+        const card = document.getElementById('prod-' + productId);
+        const imgElement = document.getElementById('img-' + productId);
+        const arrows = document.getElementById('arrows-' + productId);
+        const btn = document.getElementById('btn-' + productId);
+        const ovl = document.getElementById('ovl-' + productId);
+        const wrap = document.getElementById('img-wrap-' + productId);
 
-        const mainImg = el.dataset.image;
-        const extraImgs = el.dataset.extraImages ? el.dataset.extraImages.split(',') : [];
-        const allImages = [mainImg, ...extraImgs].filter(url => url.trim() !== "");
+        // Get Data from the hidden script tag
+        const data = JSON.parse(el.querySelector('.variant-data').textContent);
         
-        productImagesMap[productId] = {
-            images: allImages,
-            currentIndex: 0
+        // Update active images for this product
+        activeImages[productId] = {
+            list: data.images,
+            index: 0
         };
 
-        img.style.opacity = '0';
-        setTimeout(() => { 
-            img.src = mainImg; 
-            img.style.opacity = '1'; 
-        }, 300);
-
-        if(arrows) {
-            arrows.style.display = allImages.length > 1 ? 'flex' : 'none';
-        }
-
+        // UI Update: Active Dot
         card.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
         el.classList.add('active');
 
-        if (variantStock === 0) {
-            imgWrap.classList.add('is-sold-out');
+        // Update Image with Fade
+        imgElement.style.opacity = '0.3';
+        setTimeout(() => {
+            imgElement.src = data.images[0];
+            imgElement.style.opacity = '1';
+        }, 150);
+
+        // Show/Hide Arrows based on image count
+        arrows.style.display = data.images.length > 1 ? 'flex' : 'none';
+
+        // Stock Logic
+        if (data.stock <= 0) {
+            wrap.classList.add('is-sold-out');
             ovl.style.display = 'block';
             btn.classList.add('btn-disabled');
             btn.innerText = 'غير متوفر حالياً';
         } else {
-            imgWrap.classList.remove('is-sold-out');
+            wrap.classList.remove('is-sold-out');
             ovl.style.display = 'none';
             btn.classList.remove('btn-disabled');
             btn.innerText = 'عرض التفاصيل';
         }
     }
 
-    function changeExtraImage(productId, direction, event) {
+    function changeImage(productId, direction, event) {
         event.preventDefault();
         event.stopPropagation();
-        
-        const data = productImagesMap[productId];
-        if (!data || data.images.length <= 1) return;
 
-        data.currentIndex += direction;
-        if (data.currentIndex >= data.images.length) data.currentIndex = 0;
-        if (data.currentIndex < 0) data.currentIndex = data.images.length - 1;
+        const data = activeImages[productId];
+        if (!data || data.list.length <= 1) return;
 
-        const img = document.getElementById('img-' + productId);
-        img.style.opacity = '0.5';
-        setTimeout(() => {
-            img.src = data.images[data.currentIndex];
-            img.style.opacity = '1';
-        }, 150);
+        data.index += direction;
+        if (data.index >= data.list.length) data.index = 0;
+        if (data.index < 0) data.index = data.list.length - 1;
+
+        const imgElement = document.getElementById('img-' + productId);
+        imgElement.src = data.list[data.index];
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.product-card').forEach(c => {
-            const productId = c.id.replace('prod-', '');
-            let targetColor = Array.from(c.querySelectorAll('.color-dot')).find(d => parseInt(d.dataset.variantStock) > 0) || c.querySelector('.color-dot');
-            if (targetColor) updateVariant(targetColor, productId);
-        });
-    });
 
     function toggleDropdown(event) {
         event.stopPropagation();
         document.getElementById("myDropdown").classList.toggle("show");
     }
 
+    // Auto-initialize first variant for each product
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.product-card').forEach(card => {
+            const productId = card.id.replace('prod-', '');
+            const firstDot = card.querySelector('.color-dot');
+            if (firstDot) selectVariant(firstDot, productId);
+        });
+    });
+
     window.onclick = function(event) {
-        // WhatsApp closure logic
+        // Close WhatsApp
         const waContainer = document.getElementById('waContainer');
         if (waContainer && !waContainer.contains(event.target)) {
             waContainer.classList.remove('active');
         }
         
-        // Dropdown closure logic
+        // Close Dropdown
         if (!event.target.matches('.drop-btn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
                 if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
             }
         }

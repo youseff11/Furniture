@@ -121,6 +121,7 @@
     .offer-card:hover .img-container img { transform: scale(1.06); }
     .img-container.is-sold-out img { opacity: 0.4; filter: grayscale(1); }
 
+    /* Arrows Styling */
     .image-nav-arrows { 
         position: absolute; top: 50%; width: 100%; transform: translateY(-50%); 
         display: none; justify-content: space-between; padding: 0 15px; 
@@ -131,16 +132,17 @@
         width: 35px; height: 35px; cursor: pointer; pointer-events: auto; 
         display: flex; align-items: center; justify-content: center; 
         transition: 0.3s; backdrop-filter: blur(5px); border-radius: 50%;
+        font-size: 14px;
     }
     .nav-arrow:hover { background: var(--accent-gold); color: #fff; }
 
     .color-swatches { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
     .swatch { 
-        width: 18px; height: 18px; border-radius: 50%; 
-        border: 1px solid rgba(0,0,0,0.1); cursor: pointer; 
+        width: 20px; height: 20px; border-radius: 50%; 
+        border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1); cursor: pointer; 
         transition: 0.4s var(--luxury-ease); 
     }
-    .swatch.active { transform: scale(1.4); border-color: var(--accent-gold); box-shadow: 0 0 10px rgba(184, 134, 11, 0.2); }
+    .swatch.active { transform: scale(1.3); box-shadow: 0 0 0 2px var(--accent-gold); }
     .swatch.is-sold-out-swatch { opacity: 0.3; }
 
     .price-box { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; direction: ltr; }
@@ -245,11 +247,9 @@
             max-width: 400px; 
             margin: 0 auto;
         }
-        .offers-header h1 { font-size: 2rem; }
+        .offers-header h1 { font-size: 2.5rem; }
         .offer-card { padding-bottom: 15px; }
         .img-container { margin-bottom: 15px; }
-        .offer-card h3 { font-size: 18px !important; }
-        .buy-btn { padding: 12px; font-size: 12px; }
     }
 </style>
 
@@ -290,27 +290,33 @@
 
             <div class="img-container" id="cont-{{ product.id }}">
                 <img src="{{ product.main_image }}" alt="{{ product.name }}" id="img-{{ product.id }}" loading="lazy">
+                
                 <div class="image-nav-arrows" id="arrows-{{ product.id }}">
-                    <button class="nav-arrow prev" onclick="changeImg('{{ product.id }}', -1, event)">❯</button>
-                    <button class="nav-arrow next" onclick="changeImg('{{ product.id }}', 1, event)">❮</button>
+                    <button class="nav-arrow prev" onclick="changeOfferImg('{{ product.id }}', -1, event)">❮</button>
+                    <button class="nav-arrow next" onclick="changeOfferImg('{{ product.id }}', 1, event)">❯</button>
                 </div>
             </div>
 
             <h3 style="font-family: var(--font-arabic-heading); font-size: 22px; font-weight: 700; margin: 0 0 12px; text-align: center; color: #1a1a1a;">{{ product.name }}</h3>
 
             <div class="color-swatches">
-                {% for v in product.variants.all|dictsortreversed:"total_stock" %}
+                {% for v in product.variants.all %}
                 <div class="swatch {% if v.total_stock == 0 %}is-sold-out-swatch{% endif %}" 
-                     style="background: {{ v.color_code }};" title="{{ v.color_name }}"
-                     data-image="{{ v.variant_image.url }}" data-stock="{{ v.total_stock }}" 
-                     data-extra="{% for ex in v.additional_images.all %}{{ ex.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                     onclick="updateOffer('{{ product.id }}', this)">
+                     style="background: {{ v.color_code }};" 
+                     onclick="updateOfferVariant(this, '{{ product.id }}')">
+                    
+                    <script type="application/json" class="v-data">
+                        {
+                            "images": ["{{ v.variant_image.url }}"{% for extra in v.additional_images.all %}, "{{ extra.image.url }}"{% endfor %}],
+                            "stock": {{ v.total_stock|default:0 }}
+                        }
+                    </script>
                 </div>
                 {% endfor %}
             </div>
             
             <div class="price-box">
-                <span class="new-price">{{ product.discount_price|default:product.price|floatformat:0 }} ج.م</span>
+                <span class="new-price">{{ product.get_effective_price|floatformat:0 }} ج.م</span>
                 {% if product.discount_price %}<span class="old-price">{{ product.price|floatformat:0 }} ج.م</span>{% endif %}
             </div>
             <a href="{% url 'product_detail' product.id %}" class="buy-btn" id="btn-{{ product.id }}">عرض التفاصيل</a>
@@ -325,53 +331,76 @@
 </div>
 
 <script>
-    document.addEventListener('click', (e) => {
-        const container = document.getElementById('waContainer');
-        if (container && !container.contains(e.target)) {
-            container.classList.remove('active');
-        }
-    });
+    let activeOfferImages = {};
 
-    let offerData = {};
+    function updateOfferVariant(el, pId) {
+        const card = document.getElementById('card-' + pId);
+        const img = document.getElementById('img-' + pId);
+        const arrows = document.getElementById('arrows-' + pId);
+        const btn = document.getElementById('btn-' + pId);
+        const badge = document.getElementById('badge-' + pId);
+        const cont = document.getElementById('cont-' + pId);
 
-    function updateOffer(pId, el) {
-        const img = document.getElementById('img-'+pId), badge = document.getElementById('badge-'+pId),
-              btn = document.getElementById('btn-'+pId), cont = document.getElementById('cont-'+pId),
-              arrows = document.getElementById('arrows-'+pId), stock = parseInt(el.dataset.stock);
-
-        const imgs = [el.dataset.image, ...(el.dataset.extra ? el.dataset.extra.split(',') : [])].filter(u => u);
-        offerData[pId] = { images: imgs, idx: 0 };
-
-        img.style.opacity = '0';
-        setTimeout(() => { img.src = imgs[0]; img.style.opacity = '1'; }, 300);
+        const data = JSON.parse(el.querySelector('.v-data').textContent);
         
-        if(arrows) arrows.style.display = imgs.length > 1 ? 'flex' : 'none';
+        activeOfferImages[pId] = {
+            list: data.images,
+            index: 0
+        };
 
-        el.parentElement.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        card.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
         el.classList.add('active');
 
-        const isOut = stock <= 0;
-        cont.classList.toggle('is-sold-out', isOut);
-        badge.style.display = isOut ? 'block' : 'none';
-        btn.classList.toggle('disabled', isOut);
-        btn.innerText = isOut ? 'غير متوفر حالياً' : 'عرض التفاصيل';
+        img.style.opacity = '0.3';
+        setTimeout(() => {
+            img.src = data.images[0];
+            img.style.opacity = '1';
+        }, 150);
+
+        arrows.style.display = data.images.length > 1 ? 'flex' : 'none';
+
+        if (data.stock <= 0) {
+            cont.classList.add('is-sold-out');
+            badge.style.display = 'block';
+            btn.classList.add('disabled');
+            btn.innerText = 'غير متوفر حالياً';
+        } else {
+            cont.classList.remove('is-sold-out');
+            badge.style.display = 'none';
+            btn.classList.remove('disabled');
+            btn.innerText = 'عرض التفاصيل';
+        }
     }
 
-    function changeImg(pId, dir, e) {
-        e.preventDefault(); e.stopPropagation();
-        const d = offerData[pId]; if (!d || d.images.length <= 1) return;
-        d.idx = (d.idx + dir + d.images.length) % d.images.length;
-        const img = document.getElementById('img-'+pId);
-        img.style.opacity = '0.5';
-        setTimeout(() => { img.src = d.images[d.idx]; img.style.opacity = '1'; }, 150);
+    function changeOfferImg(pId, dir, e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const data = activeOfferImages[pId];
+        if (!data || data.list.length <= 1) return;
+
+        data.index = (data.index + dir + data.list.length) % data.list.length;
+        document.getElementById('img-' + pId).src = data.list[data.index];
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.offer-card').forEach(card => {
             const pId = card.id.replace('card-', '');
-            let target = Array.from(card.querySelectorAll('.swatch')).find(s => parseInt(s.dataset.stock) > 0) || card.querySelector('.swatch');
-            if (target) updateOffer(pId, target);
+            // اختيار أول لون متوفر، أو أول لون عموماً
+            const target = Array.from(card.querySelectorAll('.swatch')).find(s => {
+                const d = JSON.parse(s.querySelector('.v-data').textContent);
+                return d.stock > 0;
+            }) || card.querySelector('.swatch');
+            
+            if (target) updateOfferVariant(target, pId);
         });
     });
+
+    window.onclick = function(event) {
+        const waContainer = document.getElementById('waContainer');
+        if (waContainer && !waContainer.contains(event.target)) {
+            waContainer.classList.remove('active');
+        }
+    }
 </script>
 {% endblock %}
