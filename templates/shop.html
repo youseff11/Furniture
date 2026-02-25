@@ -177,9 +177,13 @@
         transition: transform 1.5s var(--luxury-ease), opacity 0.5s; 
     }
     .product-card:hover .main-product-img { transform: scale(1.05); }
-    .is-sold-out img { opacity: 0.4; filter: grayscale(1); }
 
-    /* New: Navigation Arrows Styling */
+    /* تم التعديل: إزالة الـ grayscale والـ opacity المنخفضة لضمان بقاء الألوان طبيعية */
+    .is-sold-out img { 
+        opacity: 1 !important; 
+        filter: none !important; 
+    }
+
     .image-nav-arrows {
         position: absolute; top: 50%; width: 100%; transform: translateY(-50%);
         display: none; justify-content: space-between; padding: 0 10px; pointer-events: none; z-index: 5;
@@ -322,7 +326,6 @@
 </section>
 
 <script>
-    // Global map to store current images for each product card
     let activeImages = {};
 
     function selectVariant(el, productId) {
@@ -333,30 +336,24 @@
         const ovl = document.getElementById('ovl-' + productId);
         const wrap = document.getElementById('img-wrap-' + productId);
 
-        // Get Data from the hidden script tag
         const data = JSON.parse(el.querySelector('.variant-data').textContent);
         
-        // Update active images for this product
         activeImages[productId] = {
             list: data.images,
             index: 0
         };
 
-        // UI Update: Active Dot
         card.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
         el.classList.add('active');
 
-        // Update Image with Fade
         imgElement.style.opacity = '0.3';
         setTimeout(() => {
             imgElement.src = data.images[0];
             imgElement.style.opacity = '1';
         }, 150);
 
-        // Show/Hide Arrows based on image count
         arrows.style.display = data.images.length > 1 ? 'flex' : 'none';
 
-        // Stock Logic
         if (data.stock <= 0) {
             wrap.classList.add('is-sold-out');
             ovl.style.display = 'block';
@@ -377,10 +374,7 @@
         const data = activeImages[productId];
         if (!data || data.list.length <= 1) return;
 
-        data.index += direction;
-        if (data.index >= data.list.length) data.index = 0;
-        if (data.index < 0) data.index = data.list.length - 1;
-
+        data.index = (data.index + direction + data.list.length) % data.list.length;
         const imgElement = document.getElementById('img-' + productId);
         imgElement.src = data.list[data.index];
     }
@@ -390,7 +384,6 @@
         document.getElementById("myDropdown").classList.toggle("show");
     }
 
-    // Auto-initialize first variant for each product
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.product-card').forEach(card => {
             const productId = card.id.replace('prod-', '');
@@ -400,13 +393,11 @@
     });
 
     window.onclick = function(event) {
-        // Close WhatsApp
         const waContainer = document.getElementById('waContainer');
         if (waContainer && !waContainer.contains(event.target)) {
             waContainer.classList.remove('active');
         }
         
-        // Close Dropdown
         if (!event.target.matches('.drop-btn')) {
             const dropdowns = document.getElementsByClassName("dropdown-content");
             for (let i = 0; i < dropdowns.length; i++) {

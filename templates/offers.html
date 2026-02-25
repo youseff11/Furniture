@@ -119,9 +119,13 @@
         transition: transform 1.5s var(--luxury-ease), opacity 0.5s; 
     }
     .offer-card:hover .img-container img { transform: scale(1.06); }
-    .img-container.is-sold-out img { opacity: 0.4; filter: grayscale(1); }
 
-    /* Arrows Styling */
+    /* تم التعديل: إزالة تأثير الأبيض والأسود لتبقى الصور طبيعية حتى عند نفاذ الكمية */
+    .img-container.is-sold-out img { 
+        opacity: 1 !important; 
+        filter: none !important; 
+    }
+
     .image-nav-arrows { 
         position: absolute; top: 50%; width: 100%; transform: translateY(-50%); 
         display: none; justify-content: space-between; padding: 0 15px; 
@@ -386,7 +390,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.offer-card').forEach(card => {
             const pId = card.id.replace('card-', '');
-            // اختيار أول لون متوفر، أو أول لون عموماً
             const target = Array.from(card.querySelectorAll('.swatch')).find(s => {
                 const d = JSON.parse(s.querySelector('.v-data').textContent);
                 return d.stock > 0;
