@@ -1,138 +1,125 @@
-from django.db import models
-from colorfield.fields import ColorField
-from django.core.mail import send_mail
-from django.conf import settings
-from django.db.models import Sum
-from django.utils import timezone
 import uuid
 from datetime import timedelta
+from decimal import Decimal
+
+from django.db import models, transaction
+from django.db.models import Sum
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.models import User  # إضافة استيراد موديل المستخدمين
+from colorfield.fields import ColorField
 from django_resized import ResizedImageField
+
+# --- Categories ---
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True, null=True)
 
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
-    class Meta:
-        verbose_name_plural = "Categories"
+
+# --- Products ---
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
-    sku = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name="SKU (Stock Keeping Unit)")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
+    sku = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name="SKU")
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, related_name='products', null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2) 
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) 
-    stock = models.PositiveIntegerField(default=0, verbose_name="Total Stock Quantity", editable=False)
+    stock = models.PositiveIntegerField(default=0, verbose_name="Total Stock", editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
     is_new_arrival = models.BooleanField(default=False, verbose_name="New Arrival?")
     new_arrival_updated_at = models.DateTimeField(null=True, blank=True, editable=False)
 
     def __str__(self):
-        return f"{self.name} ({self.sku if self.sku else 'No SKU'})"
+        return f"{self.name} ({self.sku or 'No SKU'})"
 
     def save(self, *args, **kwargs):
         if self.pk:
             old_instance = Product.objects.filter(pk=self.pk).first()
             if old_instance and self.is_new_arrival and not old_instance.is_new_arrival:
                 self.new_arrival_updated_at = timezone.now()
-            elif not self.is_new_arrival:
-                self.new_arrival_updated_at = None
-        else:
-            if self.is_new_arrival:
-                self.new_arrival_updated_at = timezone.now()
+        elif self.is_new_arrival:
+            self.new_arrival_updated_at = timezone.now()
 
         if not self.sku:
-            prefix = self.name[:3].upper() if self.name else "PRD"
-            unique_id = str(uuid.uuid4().hex[:6].upper())
-            self.sku = f"{prefix}-{unique_id}"
+            prefix = self.name[:3].upper() if self.name else "FUR"
+            self.sku = f"{prefix}-{uuid.uuid4().hex[:6].upper()}"
         
         super().save(*args, **kwargs)
 
     def update_total_stock(self):
-        """تحديث إجمالي المخزون للمنتج"""
         total = ProductSize.objects.filter(variant__product=self).aggregate(total=Sum('stock'))['total'] or 0
         Product.objects.filter(pk=self.pk).update(stock=total)
 
     @property
+    def get_effective_price(self):
+        return self.discount_price if self.discount_price else self.price
+
+    @property
     def is_new(self):
         if self.is_new_arrival and self.new_arrival_updated_at:
-            expiry_date = self.new_arrival_updated_at + timedelta(days=7)
-            return timezone.now() < expiry_date
+            return timezone.now() < self.new_arrival_updated_at + timedelta(days=7)
         return False
 
     @property
     def main_image(self):
-        first_variant = self.variants.first()
-        if first_variant and first_variant.variant_image:
-            return first_variant.variant_image.url
+        variant = self.variants.first()
+        if variant and variant.variant_image:
+            return variant.variant_image.url
         return None
 
-    @property
-    def is_out_of_stock(self):
-        return self.stock <= 0
 
-    @property
-    def discount_percentage(self):
-        if self.discount_price and self.price > 0:
-            discount = ((self.price - self.discount_price) / self.price) * 100
-            return int(discount)
-        return 0
+# --- Variants & Inventory ---
 
 class ProductVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     color_name = models.CharField(max_length=50)
-    color_code = ColorField(default='#FF0000') 
-    
+    color_code = ColorField(default='#000000') 
     variant_image = ResizedImageField(
-        size=[800, 1000], 
-        quality=70, 
-        upload_to='variants/', 
-        force_format='WEBP',
-        crop=['middle', 'center'],
-        verbose_name="Main Image for this Color"
+        size=[800, 1000], quality=75, upload_to='variants/', 
+        force_format='WEBP', crop=['middle', 'center']
     )
-
-    @property
-    def total_stock(self):
-        return self.sizes.aggregate(total=Sum('stock'))['total'] or 0
 
     def __str__(self):
         return f"{self.product.name} - {self.color_name}"
 
+
 class ProductImage(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='additional_images')
     image = ResizedImageField(
-        size=[800, 1000], 
-        quality=70, 
-        upload_to='variants/extra/', 
-        force_format='WEBP',
-        crop=['middle', 'center']
+        size=[800, 1000], quality=75, upload_to='variants/extra/', 
+        force_format='WEBP', crop=['middle', 'center']
     )
-    alt_text = models.CharField(max_length=200, blank=True, null=True, help_text="description")
+    alt_text = models.CharField(max_length=200, blank=True, null=True)
 
-    def __str__(self):
-        return f"Image for {self.variant.product.name} - {self.variant.color_name}"
 
 class ProductSize(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='sizes')
-    size_name = models.CharField(max_length=20, verbose_name="Size (S, M, L, 42, etc.)")
-    stock = models.PositiveIntegerField(default=5, verbose_name="Stock for this Size")
+    size_name = models.CharField(max_length=20)
+    stock = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return f"{self.variant.product.name} - {self.variant.color_name} - {self.size_name}"
+        return f"{self.variant} - {self.size_name}"
 
-    def save(self, *args, **kwargs):
-        # تم إزالة update_total_stock من هنا لتسريع عملية الرفع الجماعي
-        super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        product = self.variant.product
-        super().delete(*args, **kwargs)
-        product.update_total_stock()
+@receiver([post_save, post_delete], sender=ProductSize)
+def update_product_stock_signal(sender, instance, **kwargs):
+    instance.variant.product.update_total_stock()
+
+
+# --- Orders ---
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -141,15 +128,19 @@ class Order(models.Model):
         ('Delivered', 'Delivered ✅'),
         ('Canceled', 'Canceled ❌'),
     ]
-    name = models.CharField(max_length=255, verbose_name="Customer Name")
-    email = models.EmailField(verbose_name="Email Address")
-    phone = models.CharField(max_length=20, verbose_name="Phone Number")
-    governorate = models.CharField(max_length=100, verbose_name="Governorate")
-    address = models.TextField(verbose_name="Full Address")
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total Amount")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', verbose_name="Order Status")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Order Date")
-    is_completed = models.BooleanField(default=False, verbose_name="Is Completed?")
+    
+    # إضافة حقل المستخدم لحل مشكلة TypeError في الـ Checkout
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    governorate = models.CharField(max_length=100)
+    address = models.TextField()
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_completed = models.BooleanField(default=False)
 
     __original_status = None
 
@@ -157,41 +148,40 @@ class Order(models.Model):
         super().__init__(*args, **kwargs)
         self.__original_status = self.status
 
-    def __str__(self):
-        return f"Order #{self.id} - {self.name}"
-
-    def get_items_total(self):
-        return sum(item.subtotal for item in self.items.all())
-
-    def get_discount_amount(self):
-        total_before = self.get_items_total()
-        discount = total_before - self.total_price
-        return discount if discount > 0 else 0
-
     def save(self, *args, **kwargs):
         if self.pk and self.status != self.__original_status:
             self.send_status_notification()
             if self.status == 'Delivered':
                 self.is_completed = True
         super().save(*args, **kwargs)
-        self.__original_status = self.status
 
     def send_status_notification(self):
-        subject = f"Ice Club Store - Order #{self.id} Update"
+        subject = f"تحديث بخصوص طلبك رقم #{self.id} - متجر أبو يحيى"
         messages_map = {
-            'Shipped': "Great news! Your order is now on its way to you. 🚚",
-            'Delivered': "Your order has been delivered successfully! ✅",
-            'Canceled': "We're sorry, but your order has been canceled. ❌",
+            'Shipped': "طلبك في طريقه إليك الآن! 🚚",
+            'Delivered': "تم توصيل طلبك بنجاح. نتمنى أن ينال إعجابك! ✅",
+            'Canceled': "للأسف، تم إلغاء طلبك. تواصل معنا لمزيد من التفاصيل. ❌",
         }
-        status_msg = messages_map.get(self.status, f"Your order status has been updated to: {self.status}")
-        email_body = f"Hi {self.name},\n\n{status_msg}\n\nThank you for choosing Ice Club Store!"
+        msg = messages_map.get(self.status, f"تم تحديث حالة طلبك إلى: {self.status}")
         try:
-            send_mail(subject, email_body, settings.EMAIL_HOST_USER, [self.email], fail_silently=True)
-        except Exception as e:
-            print(f"Error sending email: {e}")
+            send_mail(subject, msg, settings.EMAIL_HOST_USER, [self.email], fail_silently=True)
+        except Exception: pass
 
     class Meta:
         ordering = ['-created_at']
+
+    @property
+    def get_items_total(self):
+        """حساب مجموع أسعار جميع المنتجات في الطلب قبل الخصم اليدوي"""
+        return sum(item.subtotal for item in self.items.all())
+
+    @property
+    def get_discount_amount(self):
+        """حساب قيمة الخصم اليدوي المطبق"""
+        total_items = self.get_items_total
+        discount = total_items - self.total_price
+        return discount if discount > 0 else 0
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
@@ -201,12 +191,12 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def __str__(self):
-        return f"{self.product.name if self.product else 'Deleted Product'} ({self.color})"
-
     @property
     def subtotal(self):
         return self.quantity * self.price_at_purchase
+
+
+# --- Contact ---
 
 class ContactMessage(models.Model):
     name = models.CharField(max_length=100)
@@ -215,6 +205,3 @@ class ContactMessage(models.Model):
     subject = models.CharField(max_length=200)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.name} - {self.subject}"

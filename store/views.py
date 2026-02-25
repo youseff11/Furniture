@@ -2,6 +2,8 @@ import requests
 import hashlib
 import time
 import json
+from decimal import Decimal
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -10,21 +12,36 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.forms import inlineformset_factory
-from .models import Product, Category, ContactMessage, ProductVariant, Order, OrderItem, ProductSize, ProductImage
-from .forms import ProductForm
-from django import forms
 from django.utils.html import strip_tags
 from django.template.loader import render_to_string
-from django.db import connection
-from django.db.models import Case, When, Value, IntegerField
-from decimal import Decimal
+from django.db import connection, transaction
+from django.db.models import Case, When, Value, IntegerField, Sum, F
 
-# --- Views ---
+from .models import (
+    Product, Category, ContactMessage, ProductVariant, 
+    Order, OrderItem, ProductSize, ProductImage
+)
+from .forms import ProductForm
+
+# --- الدوال المساعدة (Helper Functions) ---
+
+def get_user_cart_key(request):
+    """إرجاع مفتاح الجلسة المناسب للسلة بناءً على حالة المستخدم"""
+    if request.user.is_authenticated:
+        return f"cart_{request.user.id}"
+    return "cart_guest"
+
+def is_admin(user):
+    """التحقق مما إذا كان المستخدم مسؤولاً"""
+    return user.is_authenticated and user.is_staff
+
+# --- طرق العرض العامة (Public Views) ---
 
 def home(request):
     return render(request, 'home.html')
 
 def shop_view(request, category_slug=None):
+    # تحسين الاستعلام لجلب الفئات والمنتجات معاً
     categories = Category.objects.all()
     products = Product.objects.annotate(
         is_available_group=Case(
@@ -52,7 +69,11 @@ def shop_view(request, category_slug=None):
     return render(request, 'shop.html', context)
 
 def product_detail(request, id):
-    product = get_object_or_404(Product, id=id)    
+    # استخدام prefetch_related لجلب المتغيرات والصور بكفاءة
+    product = get_object_or_404(
+        Product.objects.prefetch_related('variants__sizes', 'variants__additional_images'), 
+        id=id
+    )
     return render(request, 'product_detail.html', {'product': product})
 
 def contact_view(request):
@@ -64,12 +85,10 @@ def contact_view(request):
         message = request.POST.get('message')
 
         ContactMessage.objects.create(
-            name=name, 
-            email=email, 
-            phone=phone,
-            subject=subject, 
-            message=message
+            name=name, email=email, phone=phone,
+            subject=subject, message=message
         )
+        
         full_message = f"New message from {name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
         try:
             send_mail(
@@ -79,26 +98,26 @@ def contact_view(request):
                 recipient_list=[settings.EMAIL_HOST_USER],
                 fail_silently=False,
             )
-            messages.success(request, 'Sent! We received your message.')
-        except Exception as e:
-            messages.warning(request, 'Message saved, but email notification failed.')
+            messages.success(request, 'شكراً لتواصلك معنا! تم استلام رسالتك.')
+        except Exception:
+            messages.warning(request, 'تم حفظ الرسالة بنجاح، ولكن تعذر إرسال إشعار البريد الإلكتروني حالياً.')
 
         return redirect('contact')
 
     return render(request, 'contact.html')
 
+# --- منطق سلة المشتريات (Cart Logic) ---
+
 def add_to_cart(request, product_id):
-    if request.user.is_authenticated:
-        user_cart_key = f"cart_{request.user.id}"
-    else:
-        user_cart_key = "cart_guest"
-        
+    user_cart_key = get_user_cart_key(request)
     cart = request.session.get(user_cart_key, {})
+    
     selected_color = request.GET.get('color', 'Default') 
     selected_size = request.GET.get('size', 'N/A')    
     item_key = f"{product_id}_{selected_color}_{selected_size}"
     
     try:
+        # جلب تفاصيل المخزن بدقة
         stock_item = ProductSize.objects.get(
             variant__product_id=product_id,
             variant__color_name=selected_color,
@@ -120,43 +139,39 @@ def add_to_cart(request, product_id):
             
             request.session[user_cart_key] = cart
             request.session.modified = True
-            messages.success(request, f'Added to cart ({selected_color} - {selected_size})!')
-            
+            messages.success(request, f'تمت إضافة المنتج ({selected_color} - {selected_size}) إلى السلة!')
         else:
-            messages.warning(request, f"Sorry, only {stock_item.stock} units available.")
+            messages.warning(request, f"نأسف، المخزن يحتوي على {stock_item.stock} قطع فقط من هذا النوع.")
             
     except ProductSize.DoesNotExist:
-        messages.error(request, "This combination is not available.")
+        messages.error(request, "عذراً، هذا النوع غير متوفر حالياً.")
 
     return redirect(request.META.get('HTTP_REFERER', 'shop'))
 
 def cart_view(request):
-    if request.user.is_authenticated:
-        user_cart_key = f"cart_{request.user.id}"
-    else:
-        user_cart_key = "cart_guest"
-        
+    user_cart_key = get_user_cart_key(request)
     cart = request.session.get(user_cart_key, {})
-    cart_items = []
-    total_price = 0
     
     if not isinstance(cart, dict):
         cart = {}
         request.session[user_cart_key] = cart
 
+    cart_items = []
+    total_price = Decimal('0.00')
+    
     for item_key, item_data in cart.items():
-        if not isinstance(item_data, dict):
-            continue
+        if not isinstance(item_data, dict): continue
             
         try:
             product = Product.objects.get(id=item_data.get('product_id'))
             quantity = item_data.get('quantity', 1)
-            actual_price = product.discount_price if product.discount_price else product.price
-            subtotal = actual_price * quantity
+            # تحديد السعر بناءً على وجود خصم
+            price = product.discount_price if product.discount_price else product.price
+            subtotal = price * quantity
             total_price += subtotal
             
             variant = ProductVariant.objects.filter(product=product, color_name=item_data.get('color')).first()
-            display_image = variant.variant_image.url if variant else product.main_image.url
+            display_image = variant.variant_image.url if variant and variant.variant_image else product.main_image.url
             
             cart_items.append({
                 'item_key': item_key,
@@ -166,7 +181,7 @@ def cart_view(request):
                 'size': item_data.get('size', 'N/A'),
                 'display_image': display_image,
                 'subtotal': subtotal,
-                'actual_price': actual_price
+                'actual_price': price
             })
         except (Product.DoesNotExist, AttributeError):
             continue
@@ -174,69 +189,53 @@ def cart_view(request):
     return render(request, 'cart.html', {'cart_items': cart_items, 'total_price': total_price})
 
 def update_cart(request, item_key, action):
-    # تحديد مفتاح السلة بناءً على حالة تسجيل الدخول
-    if request.user.is_authenticated:
-        user_cart_key = f"cart_{request.user.id}"
-    else:
-        user_cart_key = "cart_guest"
-        
+    user_cart_key = get_user_cart_key(request)
     cart = request.session.get(user_cart_key, {})
     
     if item_key in cart:
         item_data = cart[item_key]
-        
         if action == 'increase':
-            product_id = item_data['product_id']
-            color = item_data['color']
-            size_val = item_data['size']
-            
             try:
-                # محاولة جلب المخزن بناءً على اللون والمقاس (ProductSize)
                 stock_item = ProductSize.objects.get(
-                    variant__product_id=product_id,
-                    variant__color_name=color,
-                    size_name=size_val
+                    variant__product_id=item_data['product_id'],
+                    variant__color_name=item_data['color'],
+                    size_name=item_data['size']
                 )
-                available_stock = stock_item.stock
-                
+                if item_data['quantity'] < stock_item.stock:
+                    cart[item_key]['quantity'] += 1
+                else:
+                    messages.warning(request, f"عذراً، لا يوجد سوى {stock_item.stock} قطع في المخزن.")
             except ProductSize.DoesNotExist:
-                # إذا لم يوجد مقاسات، نتحقق من مخزن المنتج الأساسي
-                product = get_object_or_404(Product, id=product_id)
-                available_stock = product.stock
-            
-            # التحقق من الكمية المطلوبة مقابل المتاح
-            if item_data['quantity'] < available_stock:
-                cart[item_key]['quantity'] += 1
-            else:
-                # إرسال رسالة تحذيرية تظهر في صفحة السلة
-                messages.warning(request, f"عذراً، المتاح في المخزن هو {available_stock} قطع فقط من هذا المنتج.")
+                # التحقق من المخزن العام للمنتج إذا لم توجد تفاصيل مقاسات
+                product = get_object_or_404(Product, id=item_data['product_id'])
+                if item_data['quantity'] < product.stock:
+                    cart[item_key]['quantity'] += 1
+                else:
+                    messages.warning(request, "تم الوصول للحد الأقصى المتاح في المخزن.")
                 
         elif action == 'decrease':
             cart[item_key]['quantity'] -= 1
             if cart[item_key]['quantity'] <= 0: 
                 del cart[item_key]
-                messages.info(request, "تمت إزالة القطعة من حقيبة المشتريات.")
+                messages.info(request, "تمت إزالة المنتج من السلة.")
                 
-        # حفظ التعديلات في الجلسة (Session)
         request.session[user_cart_key] = cart
         request.session.modified = True
     else:
-        messages.error(request, "عذراً، لم نتمكن من العثور على هذا المنتج في حقيبتك.")
+        messages.error(request, "تعذر العثور على المنتج في سلتك.")
         
     return redirect('cart_view')
-    
+
 def remove_from_cart(request, item_key):
-    if request.user.is_authenticated:
-        user_cart_key = f"cart_{request.user.id}"
-    else:
-        user_cart_key = "cart_guest"
-        
+    user_cart_key = get_user_cart_key(request)
     cart = request.session.get(user_cart_key, {})
     if item_key in cart:
         del cart[item_key]
         request.session[user_cart_key] = cart
         request.session.modified = True
     return redirect('cart_view')
+
+# --- إتمام الشراء (Checkout) ---
 
 def checkout_abuyhia(request):
     if request.user.is_authenticated:
@@ -412,13 +411,16 @@ def checkout_abuyhia(request):
 def is_admin(user):
     return user.is_authenticated and user.is_staff
 
+# --- لوحة التحكم والإدارة (Dashboard & Admin) ---
+
 @user_passes_test(is_admin, login_url='login')
 def dashboard_view(request):
     orders = Order.objects.all().order_by('-created_at')
     products = Product.objects.all().order_by('-created_at')
     messages_list = ContactMessage.objects.all().order_by('-created_at')
     
-    total_revenue = sum(order.total_price for order in orders if order.status == 'Delivered')
+    # استخدام التجميع (Aggregation) لحساب الإجمالي بكفاءة
+    total_revenue = orders.filter(status='Delivered').aggregate(Sum('total_price'))['total_price__sum'] or 0
     
     context = {
         'orders': orders,
@@ -433,122 +435,107 @@ def dashboard_view(request):
     }
     return render(request, 'dashboard.html', context)
 
-# ... (بقية دوال الإدارة والمنتجات بقيت كما هي دون تغيير) ...
-
 @user_passes_test(is_admin, login_url='login')
 def add_product(request):
+    # ملاحظة: استدعاء VariantFormSet يتطلب استيراده من ملف forms.py
+    from .forms import VariantFormSet # استيراد محلي لتجنب التعارض
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
         formset = VariantFormSet(request.POST, request.FILES)
         
         if form.is_valid() and formset.is_valid():
-            product = form.save()
-            
-            for i, v_form in enumerate(formset.forms):
-                if v_form.cleaned_data and not v_form.cleaned_data.get('DELETE', False):
-                    variant = v_form.save(commit=False)
-                    variant.product = product
-                    variant.save()
-                    v_form.save_m2m()
-                    
-                    size_names = request.POST.getlist(f'size_name_{i}[]')
-                    size_quantities = request.POST.getlist(f'size_qty_{i}[]')
-                    
-                    for name, qty in zip(size_names, size_quantities):
-                        if name.strip():
-                            ProductSize.objects.create(
-                                variant=variant,
-                                size_name=name.strip(),
-                                stock=int(qty) if qty else 0
-                            )
+            with transaction.atomic():
+                product = form.save()
+                for i, v_form in enumerate(formset.forms):
+                    if v_form.cleaned_data and not v_form.cleaned_data.get('DELETE', False):
+                        variant = v_form.save(commit=False)
+                        variant.product = product
+                        variant.save()
+                        v_form.save_m2m()
+                        
+                        # معالجة المقاسات الديناميكية
+                        size_names = request.POST.getlist(f'size_name_{i}[]')
+                        size_quantities = request.POST.getlist(f'size_qty_{i}[]')
+                        for name, qty in zip(size_names, size_quantities):
+                            if name.strip():
+                                ProductSize.objects.create(
+                                    variant=variant, size_name=name.strip(),
+                                    stock=int(qty) if qty else 0
+                                )
+                        # معالجة الصور الإضافية
+                        extra_images = request.FILES.getlist(f'images_custom_{i}')
+                        for img in extra_images:
+                            ProductImage.objects.create(variant=variant, image=img)
 
-                    extra_images = request.FILES.getlist(f'images_custom_{i}')
-                    for img in extra_images:
-                        ProductImage.objects.create(variant=variant, image=img)
-
-            messages.success(request, 'Product, Variants, Sizes, and Gallery added successfully! ✅')
+            messages.success(request, 'تمت إضافة المنتج وجميع المتغيرات بنجاح! ✅')
             return redirect('dashboard')
-        else:
-            messages.error(request, 'Please correct the errors below.')
     else:
         form = ProductForm()
         formset = VariantFormSet()
     
-    return render(request, 'manage_product.html', {
-        'form': form, 
-        'formset': formset, 
-        'title': 'Add New Product'
-    })
+    return render(request, 'manage_product.html', {'form': form, 'formset': formset, 'title': 'Add New Product'})
 
 @user_passes_test(is_admin, login_url='login')
 def edit_product(request, pk):
+    from .forms import VariantFormSet
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
         formset = VariantFormSet(request.POST, request.FILES, instance=product)
         
         if form.is_valid() and formset.is_valid():
-            form.save()
-            
-            for i, v_form in enumerate(formset.forms):
-                if v_form.cleaned_data and not v_form.cleaned_data.get('DELETE', False):
-                    variant = v_form.save(commit=False)
-                    variant.product = product
-                    variant.save()
-                    v_form.save_m2m()
-                    
-                    size_names = request.POST.getlist(f'size_name_{i}[]')
-                    size_quantities = request.POST.getlist(f'size_qty_{i}[]')
-                    
-                    if size_names:
-                        variant.product_sizes.all().delete()
-                        for name, qty in zip(size_names, size_quantities):
-                            if name.strip():
-                                ProductSize.objects.create(
-                                    variant=variant, 
-                                    size_name=name.strip(),
-                                    stock=int(qty) if qty else 0
-                                )
+            with transaction.atomic():
+                form.save()
+                for i, v_form in enumerate(formset.forms):
+                    if v_form.cleaned_data and not v_form.cleaned_data.get('DELETE', False):
+                        variant = v_form.save(commit=False)
+                        variant.product = product
+                        variant.save()
+                        v_form.save_m2m()
+                        
+                        # تحديث المقاسات (حذف القديم وإضافة الجديد للتعديل السريع)
+                        size_names = request.POST.getlist(f'size_name_{i}[]')
+                        size_quantities = request.POST.getlist(f'size_qty_{i}[]')
+                        if size_names:
+                            variant.sizes.all().delete() # استبدال المقاسات القديمة
+                            for name, qty in zip(size_names, size_quantities):
+                                if name.strip():
+                                    ProductSize.objects.create(
+                                        variant=variant, size_name=name.strip(),
+                                        stock=int(qty) if qty else 0
+                                    )
+                        # إضافة صور جديدة
+                        for img in request.FILES.getlist(f'images_custom_{i}'):
+                            ProductImage.objects.create(variant=variant, image=img)
+                    elif v_form.cleaned_data.get('DELETE', False) and v_form.instance.pk:
+                        v_form.instance.delete()
 
-                    extra_images = request.FILES.getlist(f'images_custom_{i}')
-                    for img in extra_images:
-                        ProductImage.objects.create(variant=variant, image=img)
-                
-                elif v_form.cleaned_data.get('DELETE', False) and v_form.instance.pk:
-                    v_form.instance.delete()
-
-            messages.success(request, 'Product updated successfully! ✨')
+            messages.success(request, 'تم تحديث المنتج بنجاح! ✨')
             return redirect('dashboard')
     else:
         form = ProductForm(instance=product)
         formset = VariantFormSet(instance=product)
     
-    return render(request, 'manage_product.html', {
-        'form': form, 
-        'formset': formset, 
-        'title': f'Edit: {product.name}'
-    })
+    return render(request, 'manage_product.html', {'form': form, 'formset': formset, 'title': f'Edit: {product.name}'})
 
 @user_passes_test(is_admin, login_url='login')
 def delete_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
     product.delete()
-    messages.error(request, 'Product has been deleted! 🗑️')
+    messages.error(request, 'تم حذف المنتج بنجاح! 🗑️')
     return redirect('dashboard')
 
 @user_passes_test(is_admin, login_url='login')
 def update_order_status(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(Order, id=order_id)
-        new_status = request.POST.get('status')        
-        valid_choices = [choice[0] for choice in Order.STATUS_CHOICES]
-        if new_status in valid_choices:
+        new_status = request.POST.get('status')
+        if new_status in dict(Order.STATUS_CHOICES):
             order.status = new_status
             order.save() 
-            messages.success(request, f'Order #{order.id} updated to {new_status}')
+            messages.success(request, f'تم تحديث حالة الطلب #{order.id} إلى {new_status}')
         else:
-            messages.error(request, f'Error: {new_status} is not a valid status.')
-            
+            messages.error(request, 'حالة طلب غير صالحة.')
     return redirect('dashboard')
 
 @user_passes_test(is_admin, login_url='login')
@@ -557,99 +544,83 @@ def update_item_quantity(request, item_id):
         item = get_object_or_404(OrderItem, id=item_id)
         order = item.order
         action = request.POST.get('action', 'update') 
-        product_name = item.product.name if item.product else "منتج غير مسمى"
+        product_name = item.product.name if item.product else "منتج"
 
         if action == 'delete':
             item.delete()
             if not order.items.exists():
                 order.status = 'Canceled'
                 order.total_price = 0
-                order.save()
-                messages.warning(request, f'تم حذف المنتج الأخير، لذا تم تحويل حالة الطلب #{order.id} إلى "ملغي".')
-                subject = f"Order #{order.id} Canceled - Ice Club"
-                email_content = f"Hi {order.name},\n\nYour order has been canceled because all items were removed."
             else:
-                new_total = sum(i.quantity * i.price_at_purchase for i in order.items.all())
-                order.total_price = new_total
-                order.save()
-                messages.success(request, f'تم إزالة {product_name} من الطلب بنجاح.')
-                subject = f"Order Update: Item Removed from Order #{order.id}"
-                email_content = f"Hi {order.name},\n\nThe item ({product_name}) has been removed from your order as requested.\nNew Total: {order.total_price} EGP"
-        
+                order.total_price = sum(i.quantity * i.price_at_purchase for i in order.items.all())
+            order.save()
+            messages.success(request, f'تم حذف {product_name} من الطلب.')
+            subject, email_content = "تحديث طلبك", f"تمت إزالة {product_name} من طلبك رقم #{order.id}."
         else:
             new_qty = int(request.POST.get('quantity', 1))
             if new_qty > 0:
-                old_qty = item.quantity
                 item.quantity = new_qty
                 item.save()
-                new_total = sum(Decimal(str(i.quantity * i.price_at_purchase)) for i in order.items.all())
-                order.total_price = new_total
+                order.total_price = sum(Decimal(str(i.quantity * i.price_at_purchase)) for i in order.items.all())
                 order.save()
-                messages.success(request, f'تم تحديث كمية {product_name} بنجاح.')
-                subject = f"Order Update: Quantity Changed for #{order.id}"
-                email_content = f"Hi {order.name},\n\nThe quantity of ({product_name}) was updated from {old_qty} to {new_qty}.\nNew Total: {order.total_price} EGP"
+                messages.success(request, f'تم تحديث كمية {product_name}.')
+                subject, email_content = "تحديث كمية الطلب", f"تم تحديث الكمية لـ {product_name} في الطلب #{order.id}."
             else:
-                messages.error(request, 'الكمية يجب أن تكون 1 على الأقل.')
+                messages.error(request, 'الكمية غير صالحة.')
                 return redirect('dashboard')
 
-        try:
-            send_mail(subject, email_content, settings.EMAIL_HOST_USER, [order.email], fail_silently=True)
-        except:
-            pass
+        try: send_mail(subject, email_content, settings.EMAIL_HOST_USER, [order.email], fail_silently=True)
+        except Exception: pass
+        
     return redirect('dashboard')
-    
+
 @user_passes_test(is_admin, login_url='login')
 def apply_order_discount(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(Order, id=order_id)
-        discount_input = request.POST.get('discount_amount', '0')
         try:
-            discount_amount = Decimal(discount_input)
-        except:
-            discount_amount = Decimal('0')
-
-        if discount_amount >= 0:
+            discount_amount = Decimal(request.POST.get('discount_amount', '0'))
             original_total = sum(Decimal(str(i.quantity * i.price_at_purchase)) for i in order.items.all())
-            if discount_amount <= original_total:
+            
+            if 0 <= discount_amount <= original_total:
                 order.total_price = original_total - discount_amount
                 order.save()
-                
-                subject = f"Update on your Order #{order.id} - Ice Club Store"
-                message = f"Hello {order.name},\nA discount of {discount_amount} EGP has been applied.\nNew Total: {order.total_price} EGP"
-                try:
-                    send_mail(subject, message, settings.EMAIL_HOST_USER, [order.email], fail_silently=True)
-                except:
-                    pass
-                messages.success(request, f'Discount of {discount_amount} EGP applied.')
+                messages.success(request, f'تم تطبيق خصم بقيمة {discount_amount} ج.م')
+                send_mail("تحديث السعر", f"تم تطبيق خصم على طلبك #{order.id}. السعر الجديد: {order.total_price}", 
+                          settings.EMAIL_HOST_USER, [order.email], fail_silently=True)
             else:
-                messages.error(request, 'Discount too high.')
+                messages.error(request, 'قيمة الخصم غير منطقية.')
+        except Exception:
+            messages.error(request, 'خطأ في معالجة الخصم.')
     return redirect('dashboard')
+
+# --- دوال الحسابات والسياسات ---
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        u, p = request.POST.get('username'), request.POST.get('password')
+        user = authenticate(request, username=u, password=p)
         if user:
             login(request, user)
-            messages.success(request, f'Welcome back, {username}!')
+            messages.success(request, f'أهلاً بك مجدداً {u}!')
             return redirect('home')
-        else:
-            messages.error(request, 'Invalid username or password')
+        messages.error(request, 'اسم المستخدم أو كلمة المرور غير صحيحة.')
     return render(request, 'login.html')
 
 def signup_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        User.objects.create_user(username=username, email=email, password=password)
-        messages.success(request, 'Account created! Please login.')
-        return redirect('login')
+        u, e, p = request.POST.get('username'), request.POST.get('email'), request.POST.get('password')
+        if User.objects.filter(username=u).exists():
+            messages.error(request, 'اسم المستخدم مأخوذ بالفعل.')
+        else:
+            User.objects.create_user(username=u, email=e, password=p)
+            messages.success(request, 'تم إنشاء الحساب! سجل دخولك الآن.')
+            return redirect('login')
     return render(request, 'signup.html')
 
 def logout_view(request):
     logout(request)
+    messages.info(request, "تم تسجيل الخروج.")
     return redirect('home')
 
 def about_view(request):
@@ -665,13 +636,16 @@ def offers_view(request):
 def policies(request):
     return render(request, 'policies.html')
 
+@user_passes_test(is_admin, login_url='login')
 def reset_orders(request):
+    """حذف جميع الطلبات وتصفير العداد (لأغراض الصيانة فقط)"""
     if request.method == "POST":
         try:
             Order.objects.all().delete()            
             with connection.cursor() as cursor:
+                # تصفير عداد الـ ID في قاعدة بيانات SQLite
                 cursor.execute("DELETE FROM sqlite_sequence WHERE name='store_order'")
-            messages.success(request, "All Orders Are Deleted")
+            messages.success(request, "تم حذف جميع الطلبات وتصفير السجل بنجاح.")
         except Exception as e:
-            messages.error(request, f"Error resetting orders: {e}")
+            messages.error(request, f"خطأ أثناء المسح: {e}")
     return redirect('dashboard')
