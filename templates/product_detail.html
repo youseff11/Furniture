@@ -79,6 +79,7 @@
     
     .stock-badge { font-size: 12px; color: #27ae60; background: #ebf9f1; padding: 4px 12px; border-radius: 20px; margin-right: 10px; }
     .stock-low { color: #e67e22; background: #fdf2e9; }
+    .stock-out { color: #e74c3c; background: #fceae9; }
 
     .selection-label { font-size: 13px; font-weight: 700; margin-bottom: 15px; display: block; color: #333; }
     
@@ -96,7 +97,7 @@
     }
     .size-chip:hover { border-color: #000; }
     .size-chip.active { background: #000; color: #fff; border-color: #000; }
-    .size-chip.out-of-stock { opacity: 0.3; pointer-events: none; background: #f9f9f9; }
+    .size-chip.out-of-stock { opacity: 0.3; pointer-events: none; background: #f9f9f9; text-decoration: line-through; }
 
     /* Action Buttons */
     .btn-primary { 
@@ -162,7 +163,7 @@
                         <div class="color-dot" 
                              style="background-color: {{ variant.color_code }};" 
                              data-color="{{ variant.color_name }}"
-                             data-stock="{{ variant.total_stock }}"
+                             data-total-stock="{{ variant.total_stock }}"
                              onclick="selectVariant(this)">
                              
                              <script type="application/json" class="v-images">
@@ -214,6 +215,7 @@
         document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
         el.classList.add('active');
         currentSelColor = el.dataset.color;
+        const variantTotalStock = parseInt(el.dataset.totalStock);
         document.getElementById('colorNameDisplay').innerText = currentSelColor;
 
         // 2. Images Update
@@ -248,6 +250,15 @@
         sizeContainer.innerHTML = "";
         currentSelSize = "";
 
+        // فحص حالة اللون ككل
+        if (variantTotalStock <= 0) {
+            stockStatus.innerText = "هذا اللون غير متوفر حالياً";
+            stockStatus.className = "stock-badge stock-out";
+        } else {
+            stockStatus.innerText = "متوفر في المخزن";
+            stockStatus.className = "stock-badge";
+        }
+
         sizes.forEach(sz => {
             const chip = document.createElement('div');
             chip.className = `size-chip ${sz.s <= 0 ? 'out-of-stock' : ''}`;
@@ -260,12 +271,12 @@
                     currentSelSize = sz.n;
                     updateMainButton();
                     
-                    // Stock hint
+                    // Stock hint للمقاس المختار
                     if(sz.s < 5) {
-                        stockStatus.innerText = `بقي ${sz.s} قطع فقط!`;
+                        stockStatus.innerText = `بقي ${sz.s} قطع فقط من هذا المقاس!`;
                         stockStatus.className = "stock-badge stock-low";
                     } else {
-                        stockStatus.innerText = "متوفر في المخزن";
+                        stockStatus.innerText = "هذا المقاس متوفر";
                         stockStatus.className = "stock-badge";
                     }
                 };
@@ -278,7 +289,13 @@
 
     function updateMainButton() {
         const btn = document.getElementById('add-to-cart-btn');
-        if(currentSelColor && currentSelSize) {
+        const activeColorDot = document.querySelector('.color-dot.active');
+        const variantTotalStock = activeColorDot ? parseInt(activeColorDot.dataset.totalStock) : 0;
+
+        if (variantTotalStock <= 0) {
+            btn.classList.add('btn-disabled');
+            btn.innerText = "هذا اللون نفذ من المخزن";
+        } else if(currentSelColor && currentSelSize) {
             btn.classList.remove('btn-disabled');
             btn.innerText = "إضافة إلى حقيبة التسوق";
         } else {
