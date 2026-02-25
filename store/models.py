@@ -66,6 +66,13 @@ class Product(models.Model):
     @property
     def get_effective_price(self):
         return self.discount_price if self.discount_price else self.price
+    @property
+    def discount_percentage(self):
+        if self.price and self.discount_price and self.price > self.discount_price:
+            discount = self.price - self.discount_price
+            percentage = (discount / self.price) * 100
+            return int(percentage)  # إرجاع الرقم كعدد صحيح (مثلاً 20 بدلاً من 20.0)
+        return 0
 
     @property
     def is_new(self):
