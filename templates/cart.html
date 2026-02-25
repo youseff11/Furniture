@@ -49,9 +49,8 @@
         border: 1px solid var(--accent-gold);
         animation: fadeInDown 0.5s both;
     }
-    .alert-warning { background: #fff3cd; color: #856404; border-right: 5px solid #ffc107; }
-    .alert-success { background: #d4edda; color: #155724; border-right: 5px solid #28a745; }
-    .alert-error { background: #f8d7da; color: #721c24; border-right: 5px solid #dc3545; }
+    /* تعديل: إبقاء استايل التحذير فقط */
+    .alert-warning, .alert-error { background: #fff3cd; color: #856404; border-right: 5px solid #ffc107; }
 
     .cart-wrapper {
         padding: 160px 5% 100px;
@@ -88,7 +87,6 @@
         margin: 0;
     }
 
-    /* تحسين الجدول */
     .cart-table { width: 100%; border-collapse: collapse; }
     .cart-table th {
         text-align: left;
@@ -114,7 +112,6 @@
     .item-name { font-size: 1.1rem; color: var(--text-main); margin-bottom: 5px; display: block; }
     .item-meta-tag { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
 
-    /* أزرار الكمية الاحترافية */
     .qty-controls {
         display: flex;
         align-items: center;
@@ -161,7 +158,6 @@
     }
     .checkout-btn:hover { background: transparent; color: var(--text-main); transform: translateY(-3px); }
 
-    /* --- WhatsApp Widget --- */
     .wa-float-container {
         position: fixed; bottom: 30px; right: 30px; z-index: 999;
         display: flex; flex-direction: column; align-items: flex-end; gap: 15px;
@@ -184,7 +180,6 @@
     }
     .wa-float-container.active .wa-contact-list { display: flex; }
 
-    /* --- Responsive Fixes --- */
     @media (max-width: 768px) {
         .messages-container { top: 80px; }
         .cart-wrapper { padding: 120px 15px 50px; }
@@ -198,21 +193,21 @@
         .btn-remove { position: absolute; top: 15px; right: 0; }
         .cart-summary { align-items: center; width: 100%; }
         .checkout-btn { width: 100%; text-align: center; }
-        .mobile-price { display: block; color: var(--accent-gold); font-weight: 700; margin-top: 10px; }
     }
 </style>
 
 {% if messages %}
 <div class="messages-container">
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-        <i class="fa-solid {% if message.tags == 'warning' %}fa-triangle-exclamation{% elif message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}" style="margin-left: 10px;"></i>
-        {{ message }}
-    </div>
+        {% if 'warning' in message.tags or 'error' in message.tags %}
+        <div class="alert alert-{{ message.tags }}">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-left: 10px;"></i>
+            {{ message }}
+        </div>
+        {% endif %}
     {% endfor %}
 </div>
 <script>
-    // إخفاء الرسائل تلقائياً بعد 4 ثوانٍ
     setTimeout(() => {
         const alerts = document.querySelectorAll('.alert');
         alerts.forEach(alert => {
@@ -252,15 +247,12 @@
                                 <div class="item-info">
                                     <span class="item-name">{{ item.product.name }}</span>
                                     <span class="item-meta-tag">{{ item.color }} / {{ item.size }}</span>
-                                    <div class="mobile-price" style="display:none;">{{ item.actual_price|floatformat:0 }} ج.م</div>
                                 </div>
                             </div>
                         </td>
-
                         <td class="desktop-only">
                             <span style="font-family: 'Playfair Display';">{{ item.actual_price|floatformat:0 }} ج.م</span>
                         </td>
-
                         <td>
                             <div class="qty-controls">
                                 <a href="{% url 'update_cart' item.item_key 'decrease' %}" class="qty-btn">−</a>
@@ -268,11 +260,9 @@
                                 <a href="{% url 'update_cart' item.item_key 'increase' %}" class="qty-btn">+</a>
                             </div>
                         </td>
-
                         <td class="desktop-only" style="color: var(--accent-gold); font-weight: 600;">
                             {{ item.subtotal|floatformat:0 }} ج.م
                         </td>
-
                         <td style="text-align: right;">
                             <a href="{% url 'remove_from_cart' item.item_key %}" class="btn-remove" title="إزالة">
                                 <i class="fa-solid fa-trash-can"></i>
