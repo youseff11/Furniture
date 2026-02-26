@@ -66,6 +66,7 @@ class Product(models.Model):
     @property
     def get_effective_price(self):
         return self.discount_price if self.discount_price else self.price
+        
     @property
     def discount_percentage(self):
         if self.price and self.discount_price and self.price > self.discount_price:
@@ -86,6 +87,17 @@ class Product(models.Model):
         if variant and variant.variant_image:
             return variant.variant_image.url
         return None
+
+
+# --- Product Specifications (الجدول الجديد للمواصفات) ---
+
+class ProductSpecification(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='specifications')
+    spec_name = models.CharField(max_length=255, verbose_name="اسم المواصفة (مثال: الألوان)")
+    spec_value = models.CharField(max_length=255, verbose_name="القيمة (مثال: أحمر، أزرق)")
+
+    def __str__(self):
+        return f"{self.spec_name}: {self.spec_value}"
 
 
 # --- Variants & Inventory ---

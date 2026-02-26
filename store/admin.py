@@ -1,9 +1,16 @@
 from django.contrib import admin
 from django.utils.html import format_html
 import nested_admin
-from .models import Product, Category, ContactMessage, ProductVariant, ProductSize, Order, OrderItem, ProductImage
+# تمت إضافة ProductSpecification للاستيراد هنا
+from .models import Product, Category, ContactMessage, ProductVariant, ProductSize, Order, OrderItem, ProductImage, ProductSpecification
 
-# --- 1. ProductImageInline ---
+# --- 1. ProductSpecificationInline (جدول المواصفات البديل للوصف) ---
+class ProductSpecificationInline(nested_admin.NestedTabularInline):
+    model = ProductSpecification
+    extra = 1
+    fields = ['spec_name', 'spec_value']
+
+# --- 2. ProductImageInline ---
 class ProductImageInline(nested_admin.NestedTabularInline):
     model = ProductImage
     extra = 1
@@ -16,13 +23,13 @@ class ProductImageInline(nested_admin.NestedTabularInline):
         return "No Image"
     image_preview.short_description = 'Preview'
 
-# --- 2. ProductSizeInline ---
+# --- 3. ProductSizeInline ---
 class ProductSizeInline(nested_admin.NestedTabularInline):
     model = ProductSize
     extra = 1
     fields = ['size_name', 'stock']
 
-# --- 3. ProductVariantInline ---
+# --- 4. ProductVariantInline ---
 class ProductVariantInline(nested_admin.NestedStackedInline):
     model = ProductVariant
     extra = 1
@@ -36,10 +43,11 @@ class ProductVariantInline(nested_admin.NestedStackedInline):
         return "No Image"
     image_preview.short_description = 'Main Image Preview'
 
-# --- 4. ProductAdmin ---
+# --- 5. ProductAdmin ---
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    inlines = [ProductVariantInline]
+    # تمت إضافة جدول المواصفات هنا ليظهر داخل صفحة المنتج
+    inlines = [ProductSpecificationInline, ProductVariantInline]
     
     list_display = ['display_image', 'sku', 'name', 'category', 'is_new_arrival', 'display_new_status', 'colored_stock', 'display_price', 'created_at']
     list_display_links = ['display_image', 'name']
@@ -48,10 +56,10 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
     search_fields = ['sku', 'name', 'description']
 
     fieldsets = (
-        ('Basic Information', {
-            'fields': ('name', 'sku', 'category', 'description', 'is_new_arrival'),
-            'classes': ('wide',),
-        }),
+            ('Basic Information', {
+                'fields': ('name', 'sku', 'category', 'is_new_arrival'),
+                'classes': ('wide',),
+            }),
         ('Pricing & Inventory', {
             'fields': (('price', 'discount_price'), 'stock'),
         }),
@@ -100,7 +108,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
         return format_html('<b style="color: {};">{}</b>', color, obj.stock)
     colored_stock.short_description = 'Stock'
 
-# --- 5. CategoryAdmin ---
+# --- 6. CategoryAdmin ---
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug']
@@ -111,30 +119,26 @@ class CategoryAdmin(admin.ModelAdmin):
             'all': ('css/admin_custom.css',)
         }
 
-# --- 6. ContactMessageAdmin ---
+# --- 7. ContactMessageAdmin ---
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
     list_display = ['name', 'subject', 'email', 'created_at']
     readonly_fields = ['name', 'email', 'phone', 'subject', 'message', 'created_at']
 
-# --- 7. OrderItemInline & OrderAdmin ---
+# --- 8. OrderItemInline & OrderAdmin ---
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    # تم إضافة 'display_item_image' هنا لعرض صورة المنتج
     readonly_fields = ['display_item_image', 'product', 'color', 'size', 'quantity', 'display_item_price']
     fields = ['display_item_image', 'product', 'color', 'size', 'quantity', 'display_item_price']
     can_delete = False
 
     def display_item_image(self, obj):
-        """جلب صورة المنتج بناءً على اللون المختار في الطلب"""
         if obj.product:
-            # البحث عن الـ Variant الذي يطابق اللون المكتوب في الطلب
             variant = obj.product.variants.filter(color_name=obj.color).first()
             if variant and variant.variant_image:
                 return format_html('<img src="{}" style="width: 60px; height: 60px; border-radius: 5px; object-fit: cover; border: 1px solid #ddd;" />', variant.variant_image.url)
             
-            # إذا لم يجد اللون، يعرض أول صورة متاحة للمنتج
             first_variant = obj.product.variants.first()
             if first_variant and first_variant.variant_image:
                 return format_html('<img src="{}" style="width: 60px; height: 60px; border-radius: 5px; object-fit: cover; opacity: 0.6;" />', first_variant.variant_image.url)
