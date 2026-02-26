@@ -1,14 +1,18 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.db import models # تم إضافة الاستيراد هنا للتحكم في شكل الحقول
 import nested_admin
-# تمت إضافة ProductSpecification للاستيراد هنا
 from .models import Product, Category, ContactMessage, ProductVariant, ProductSize, Order, OrderItem, ProductImage, ProductSpecification
 
-# --- 1. ProductSpecificationInline (جدول المواصفات البديل للوصف) ---
+# --- 1. ProductSpecificationInline ---
 class ProductSpecificationInline(nested_admin.NestedTabularInline):
     model = ProductSpecification
     extra = 1
     fields = ['spec_name', 'spec_value']
+    # هذا التعديل يجعل خانة القيمة تظهر كمربع نص كبير (Textarea) داخل الجدول
+    formfield_overrides = {
+        models.TextField: {'widget': admin.widgets.AdminTextareaWidget(attrs={'rows': 2, 'cols': 40})},
+    }
 
 # --- 2. ProductImageInline ---
 class ProductImageInline(nested_admin.NestedTabularInline):
@@ -46,7 +50,6 @@ class ProductVariantInline(nested_admin.NestedStackedInline):
 # --- 5. ProductAdmin ---
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    # تمت إضافة جدول المواصفات هنا ليظهر داخل صفحة المنتج
     inlines = [ProductSpecificationInline, ProductVariantInline]
     
     list_display = ['display_image', 'sku', 'name', 'category', 'is_new_arrival', 'display_new_status', 'colored_stock', 'display_price', 'created_at']
@@ -56,10 +59,10 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
     search_fields = ['sku', 'name', 'description']
 
     fieldsets = (
-            ('Basic Information', {
-                'fields': ('name', 'sku', 'category', 'is_new_arrival'),
-                'classes': ('wide',),
-            }),
+        ('Basic Information', {
+            'fields': ('name', 'sku', 'category', 'is_new_arrival'),
+            'classes': ('wide',),
+        }),
         ('Pricing & Inventory', {
             'fields': (('price', 'discount_price'), 'stock'),
         }),

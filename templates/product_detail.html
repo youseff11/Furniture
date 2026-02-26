@@ -4,10 +4,10 @@
 {% block content %}
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZH9JG248D6"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-ZH9JG248D6');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ZH9JG248D6');
 </script>
 
 <style>
@@ -55,6 +55,9 @@
         max-width: 100%; max-height: 100%; 
         object-fit: contain; transition: transform 0.6s var(--luxury-ease);
     }
+
+    /* إلغاء تأثير التكبير */
+    .main-display:hover .product-main-img { transform: none; }
 
     .thumbnail-gallery { display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
     .thumb { 
@@ -106,6 +109,11 @@
     .btn-disabled { background: #eee !important; color: #999 !important; cursor: not-allowed !important; transform: none !important; }
 
     .description { border-top: 1px solid #eee; margin-top: 40px; padding-top: 30px; color: var(--text-dim); line-height: 1.8; }
+    
+    .specs-table td {
+        vertical-align: top;
+        line-height: 1.6;
+    }
 
     /* Toast Notification */
     .lusso-toast {
@@ -185,12 +193,12 @@
                     {% endif %}
 
                     {% if product.specifications.all %}
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <table class="specs-table" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                             <tbody>
                                 {% for spec in product.specifications.all %}
                                 <tr style="border-bottom: 1px solid #eee;">
-                                    <td style="padding: 10px 5px; font-weight: bold; color: var(--text-main); width: 40%;">{{ spec.spec_name }}</td>
-                                    <td style="padding: 10px 5px; color: var(--text-dim);">{{ spec.spec_value }}</td>
+                                    <td style="padding: 12px 5px; font-weight: bold; color: var(--text-main); width: 40%;">{{ spec.spec_name }}</td>
+                                    <td style="padding: 12px 5px; color: var(--text-dim);">{{ spec.spec_value|linebreaksbr }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -224,14 +232,12 @@
     const pId = "{{ product.id }}";
 
     function selectVariant(el) {
-        // 1. UI Update
         document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
         el.classList.add('active');
         currentSelColor = el.dataset.color;
         const variantTotalStock = parseInt(el.dataset.totalStock);
         document.getElementById('colorNameDisplay').innerText = currentSelColor;
 
-        // 2. Images Update
         const images = JSON.parse(el.querySelector('.v-images').textContent);
         const mainImg = document.getElementById('mainDetailImg');
         const thumbGallery = document.getElementById('thumbGallery');
@@ -255,7 +261,6 @@
             thumbGallery.appendChild(t);
         });
 
-        // 3. Stock & Sizes Update
         const sizes = JSON.parse(el.querySelector('.v-sizes').textContent);
         const sizeContainer = document.getElementById('sizeOptionsContainer');
         const stockStatus = document.getElementById('stockStatus');
@@ -263,7 +268,6 @@
         sizeContainer.innerHTML = "";
         currentSelSize = "";
 
-        // فحص حالة اللون ككل
         if (variantTotalStock <= 0) {
             stockStatus.innerText = "هذا اللون غير متوفر حالياً";
             stockStatus.className = "stock-badge stock-out";
@@ -284,7 +288,6 @@
                     currentSelSize = sz.n;
                     updateMainButton();
                     
-                    // Stock hint للمقاس المختار
                     if(sz.s < 5) {
                         stockStatus.innerText = `بقي ${sz.s} قطع فقط من هذا المقاس!`;
                         stockStatus.className = "stock-badge stock-low";
@@ -296,7 +299,6 @@
             }
             sizeContainer.appendChild(chip);
         });
-
         updateMainButton();
     }
 
@@ -328,7 +330,6 @@
         }
     });
 
-    // Auto-select first variant on load
     window.addEventListener('DOMContentLoaded', () => {
         const first = document.querySelector('.color-dot');
         if(first) first.click();

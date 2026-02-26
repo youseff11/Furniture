@@ -94,7 +94,8 @@ class Product(models.Model):
 class ProductSpecification(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='specifications')
     spec_name = models.CharField(max_length=255, verbose_name="اسم المواصفة (مثال: الألوان)")
-    spec_value = models.CharField(max_length=255, verbose_name="القيمة (مثال: أحمر، أزرق)")
+    # تم تغيير الحقل إلى TextField ليسمح بإدخال قيم كثيرة جداً ومفصلة
+    spec_value = models.TextField(verbose_name="القيم (يمكنك إدخال أكثر من قيمة مفصولة بفاصلة)")
 
     def __str__(self):
         return f"{self.spec_name}: {self.spec_value}"
