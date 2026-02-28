@@ -62,6 +62,42 @@
         font-weight: 600;
     }
 
+    /* --- Pagination Styles --- */
+    .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 80px;
+        flex-wrap: wrap;
+    }
+    .pag-btn {
+        padding: 10px 22px;
+        border: 1px solid var(--border-luxury);
+        background: var(--card-white);
+        color: var(--text-main);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+        font-family: var(--font-arabic-body);
+    }
+    .pag-btn:hover {
+        background: var(--accent-gold);
+        color: #fff;
+        border-color: var(--accent-gold);
+        transform: translateY(-3px);
+    }
+    .pag-btn.active {
+        background: var(--accent-gold);
+        color: #fff;
+        border-color: var(--accent-gold);
+    }
+    .pag-btn.disabled {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
     /* --- WhatsApp Style --- */
     .wa-float-container {
         position: fixed;
@@ -178,7 +214,6 @@
     }
     .product-card:hover .main-product-img { transform: scale(1.05); }
 
-    /* بقاء الألوان طبيعية */
     .is-sold-out img { 
         opacity: 1 !important; 
         filter: none !important; 
@@ -196,7 +231,6 @@
     }
     .nav-arrow:hover { background: var(--accent-gold); color: #fff; }
 
-    /* --- Eye Full Image Button --- */
     .view-full-btn {
         position: absolute;
         bottom: 20px;
@@ -227,7 +261,6 @@
         color: white;
     }
 
-    /* --- Full Image Modal --- */
     .image-modal {
         display: none;
         position: fixed;
@@ -250,7 +283,7 @@
     .image-modal-content {
         max-width: 90%;
         max-height: 90vh;
-        object-fit: contain; /* هذه هي الخاصية التي تعرض الصورة كاملة */
+        object-fit: contain; 
         border-radius: 5px;
         box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         transform: scale(0.9);
@@ -302,7 +335,7 @@
     @media (max-width: 768px) {
         .product-grid { grid-template-columns: repeat(1, 1fr); gap: 30px; padding: 0 1.5rem; }
         .shop-header h1 { font-size: 1.8rem; }
-        .view-full-btn { opacity: 1; transform: translateY(0); } /* ظهوره دائماً في الموبايل */
+        .view-full-btn { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes dropFade { 
@@ -407,6 +440,30 @@
         </div>
         {% endfor %}
     </div>
+
+    {% if products.has_other_pages %}
+    <div class="pagination-wrapper">
+        {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="pag-btn">السابق</a>
+        {% else %}
+            <span class="pag-btn disabled">السابق</span>
+        {% endif %}
+
+        {% for i in products.paginator.page_range %}
+            {% if products.number == i %}
+                <span class="pag-btn active">{{ i }}</span>
+            {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
+                <a href="?page={{ i }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="pag-btn">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="pag-btn">التالي</a>
+        {% else %}
+            <span class="pag-btn disabled">التالي</span>
+        {% endif %}
+    </div>
+    {% endif %}
 </section>
 
 <div id="fullImageModal" class="image-modal">
@@ -443,7 +500,6 @@
 
         arrows.style.display = data.images.length > 1 ? 'flex' : 'none';
 
-        // تصحيح: التحقق من المخزن
         if (parseInt(data.stock) <= 0) {
             wrap.classList.add('is-sold-out');
             ovl.style.display = 'block';
@@ -474,10 +530,9 @@
         document.getElementById("myDropdown").classList.toggle("show");
     }
 
-    // --- وظائف عرض الصورة الكاملة (Modal) ---
     function openFullImage(productId, event) {
         event.preventDefault();
-        event.stopPropagation(); // منع الانتقال لصفحة التفاصيل عند الضغط على العين
+        event.stopPropagation(); 
         
         const imgElement = document.getElementById('img-' + productId);
         const modal = document.getElementById('fullImageModal');
@@ -486,7 +541,6 @@
         modalImg.src = imgElement.src;
         modal.style.display = 'flex';
         
-        // تأثير الظهور الانسيابي
         setTimeout(() => {
             modal.classList.add('show');
         }, 10);
@@ -497,7 +551,7 @@
         modal.classList.remove('show');
         setTimeout(() => {
             modal.style.display = 'none';
-        }, 400); // الانتظار حتى انتهاء الـ transition
+        }, 400); 
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -521,7 +575,6 @@
             }
         }
 
-        // إغلاق نافذة الصورة الكاملة عند الضغط في أي مكان خارجها
         const modal = document.getElementById('fullImageModal');
         if (event.target === modal) {
             closeModal();

@@ -69,6 +69,42 @@
         text-transform: uppercase;
     }
 
+    /* --- Pagination Styles --- */
+    .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 80px;
+        flex-wrap: wrap;
+    }
+    .pag-btn {
+        padding: 10px 22px;
+        border: 1px solid var(--border-luxury);
+        background: var(--card-white);
+        color: var(--text-main);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+        font-family: var(--font-arabic-body);
+    }
+    .pag-btn:hover {
+        background: var(--accent-gold);
+        color: #fff;
+        border-color: var(--accent-gold);
+        transform: translateY(-3px);
+    }
+    .pag-btn.active {
+        background: var(--accent-gold);
+        color: #fff;
+        border-color: var(--accent-gold);
+    }
+    .pag-btn.disabled {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
     .product-grid { 
         display: grid; 
         grid-template-columns: repeat(4, 1fr); 
@@ -125,7 +161,6 @@
         filter: none !important; 
     }
 
-    /* --- Eye Full Image Button (Bottom Right) --- */
     .view-full-btn {
         position: absolute;
         bottom: 20px;
@@ -156,7 +191,6 @@
         color: white;
     }
 
-    /* --- Full Image Modal --- */
     .image-modal {
         display: none;
         position: fixed;
@@ -250,7 +284,6 @@
         align-items: flex-end;
         gap: 15px;
     }
-
     .wa-contact-list {
         display: none;
         flex-direction: column;
@@ -258,7 +291,6 @@
         margin-bottom: 5px;
         transform-origin: bottom right;
     }
-
     .wa-contact-item {
         background: white;
         color: #333;
@@ -276,43 +308,17 @@
         white-space: nowrap;
         border: 1px solid #eee;
     }
-
-    .wa-contact-item i {
-        color: var(--whatsapp-green);
-        font-size: 18px;
-    }
-
-    .wa-contact-item:hover {
-        transform: translateX(-10px);
-        background: var(--accent-gold);
-        color: white;
-    }
-    
+    .wa-contact-item i { color: var(--whatsapp-green); font-size: 18px; }
+    .wa-contact-item:hover { transform: translateX(-10px); background: var(--accent-gold); color: white; }
     .wa-contact-item:hover i { color: white; }
-
     .wa-main-btn {
-        width: 65px;
-        height: 65px;
-        background: var(--whatsapp-green);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 32px;
-        cursor: pointer;
-        box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
-        transition: 0.4s var(--luxury-ease);
+        width: 65px; height: 65px; background: var(--whatsapp-green);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 32px; cursor: pointer;
+        box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3); transition: 0.4s;
     }
-
-    .wa-main-btn:hover {
-        transform: scale(1.1) rotate(15deg);
-    }
-
-    .wa-float-container.active .wa-contact-list {
-        display: flex;
-        animation: slideIn 0.4s var(--luxury-ease) forwards;
-    }
+    .wa-main-btn:hover { transform: scale(1.1) rotate(15deg); }
+    .wa-float-container.active .wa-contact-list { display: flex; animation: slideIn 0.4s var(--luxury-ease) forwards; }
 
     @keyframes slideIn {
         from { opacity: 0; transform: translateY(20px) scale(0.8); }
@@ -320,20 +326,11 @@
     }
 
     @media (max-width: 1200px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
-    
     @media (max-width: 768px) {
         .offers-wrapper { padding: 100px 10% 60px; } 
-        .product-grid { 
-            grid-template-columns: 1fr; 
-            gap: 25px; 
-            max-width: 400px; 
-            margin: 0 auto;
-        }
+        .product-grid { grid-template-columns: 1fr; gap: 25px; max-width: 400px; margin: 0 auto; }
         .offers-header h1 { font-size: 2.5rem; }
         .offer-card { padding-bottom: 15px; }
-        .img-container { margin-bottom: 15px; }
-        
-        /* إظهار زر العين دائماً في الموبايل */
         .view-full-btn { opacity: 1; transform: translateY(0); }
     }
 </style>
@@ -417,6 +414,30 @@
         </div>
       {% endfor %}
     </div>
+
+    {% if products.has_other_pages %}
+    <div class="pagination-wrapper">
+        {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}" class="pag-btn">السابق</a>
+        {% else %}
+            <span class="pag-btn disabled">السابق</span>
+        {% endif %}
+
+        {% for i in products.paginator.page_range %}
+            {% if products.number == i %}
+                <span class="pag-btn active">{{ i }}</span>
+            {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
+                <a href="?page={{ i }}" class="pag-btn">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}" class="pag-btn">التالي</a>
+        {% else %}
+            <span class="pag-btn disabled">التالي</span>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 <div id="fullImageModal" class="image-modal">
@@ -477,7 +498,6 @@
         document.getElementById('img-' + pId).src = data.list[data.index];
     }
 
-    // --- Modal Functions (With smooth animation) ---
     function openFullImage(pId, event) {
         event.preventDefault();
         event.stopPropagation();

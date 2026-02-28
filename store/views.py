@@ -40,10 +40,13 @@ def is_admin(user):
 def home(request):
     return render(request, 'home.html')
 
+from django.core.paginator import Paginator # تأكد من استيراد الموزع
+
 def shop_view(request, category_slug=None):
-    # تحسين الاستعلام لجلب الفئات والمنتجات معاً
     categories = Category.objects.all()
-    products = Product.objects.annotate(
+    
+    # تحسين الأداء باستخدام prefetch_related لجلب بيانات الألوان والمقاسات في استعلام واحد
+    products_list = Product.objects.prefetch_related('variants__sizes', 'variants__additional_images').annotate(
         is_available_group=Case(
             When(stock__gt=0, then=Value(0)),
             default=Value(1),
@@ -59,10 +62,17 @@ def shop_view(request, category_slug=None):
     selected_category = None
     if category_slug:
         selected_category = get_object_or_404(Category, slug=category_slug)
-        products = products.filter(category=selected_category)
+        products_list = products_list.filter(category=selected_category)
+
+    # --- بداية كود التقسيم (Pagination) ---
+    # تقسيم القائمة لعرض 20 منتج فقط في كل صفحة
+    paginator = Paginator(products_list, 20) 
+    page_number = request.GET.get('page')
+    products = paginator.get_page(page_number)
+    # --- نهاية كود التقسيم ---
 
     context = {
-        'products': products,
+        'products': products, # سيحتوي الآن على 20 منتجاً فقط للصفحة الحالية
         'categories': categories,
         'selected_category': selected_category,
     }
@@ -627,11 +637,36 @@ def about_view(request):
     return render(request, 'about.html')
 
 def offers_view(request):
-    products = Product.objects.filter(discount_price__gt=0).annotate(
-        is_available_group=Case(When(stock__gt=0, then=Value(0)), default=Value(1), output_field=IntegerField()),
-        manual_new_priority=Case(When(is_new_arrival=True, then=Value(1)), default=Value(0), output_field=IntegerField())
+    # تحسين الأداء باستخدام prefetch_related لجلب بيانات الألوان والمقاسات مرة واحدة
+    products_list = Product.objects.filter(
+        discount_price__gt=0
+    ).prefetch_related(
+        'variants__sizes', 
+        'variants__additional_images'
+    ).annotate(
+        is_available_group=Case(
+            When(stock__gt=0, then=Value(0)), 
+            default=Value(1), 
+            output_field=IntegerField()
+        ),
+        manual_new_priority=Case(
+            When(is_new_arrival=True, then=Value(1)), 
+            default=Value(0), 
+            output_field=IntegerField()
+        )
     ).order_by('is_available_group', '-manual_new_priority', '-created_at')
-    return render(request, 'offers.html', {'products': products, 'title': 'Exclusive Offers'})
+
+    # --- إعداد نظام التقسيم ---
+    # عرض 20 منتج فقط في كل صفحة لتقليل وقت التحميل
+    paginator = Paginator(products_list, 20) 
+    page_number = request.GET.get('page')
+    products = paginator.get_page(page_number)
+
+    context = {
+        'products': products, 
+        'title': 'Exclusive Offers'
+    }
+    return render(request, 'offers.html', context)
 
 def policies(request):
     return render(request, 'policies.html')
