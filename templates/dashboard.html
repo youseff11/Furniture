@@ -70,13 +70,36 @@
     }
     .section-header h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin: 0; }
 
-    /* --- الجداول --- */
-    .table-container { width: 100%; overflow-x: auto; }
+    /* --- الجداول وتنسيق السكرول بار --- */
+    .table-container { 
+        width: 100%; 
+        overflow-x: auto; 
+        max-height: 500px; 
+        overflow-y: auto; 
+    }
+
+    .table-container::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    .table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+        background: var(--accent-gold);
+        border-radius: 10px;
+    }
+
     table { width: 100%; border-collapse: collapse; min-width: 700px; }
-    th { 
+    
+    thead th { 
+        position: sticky; 
+        top: 0; 
+        z-index: 10;
         text-align: right; padding: 15px 25px; background: #fcfaf5; 
         color: var(--accent-gold); font-size: 12px; text-transform: uppercase; 
     }
+    
     td { padding: 15px 25px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
 
     .product-thumb { 
@@ -111,7 +134,7 @@
     }
     .order-item-img { width: 60px; height: 75px; object-fit: cover; border-radius: 4px; }
 
-    /* --- قسم الفاتورة (مطابق للصورة) --- */
+    /* --- قسم الفاتورة --- */
     .discount-section {
         background: #fff; 
         padding: 25px; 
@@ -138,14 +161,30 @@
     .status-shipped { background: #e0f2f1; color: #00796b; }
     .status-canceled { background: #ffebee; color: #c62828; }
 
+    /* --- تحسينات الشاشة الصغيرة (التلفون) --- */
     @media (max-width: 768px) {
-        .dashboard-wrapper { padding: 110px 3% 50px; }
-        .stats-grid { grid-template-columns: repeat(2, 1fr); }
-        .order-grid { grid-template-columns: 1fr; }
-        .section-header { flex-direction: column; text-align: center; }
-        .hide-mobile { display: none; }
+        .dashboard-wrapper { padding: 100px 10px 50px; }
+        
+        /* تقليل الـ padding العام للجداول لمنع التمدد الزائد */
         table { min-width: 100%; }
-        th, td { padding: 10px; font-size: 12px; }
+        thead th { padding: 10px 8px; font-size: 11px; }
+        td { padding: 10px 8px; font-size: 12px; }
+
+        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-card { padding: 15px 5px; }
+        .stat-card h3 { font-size: 1.3rem; }
+        
+        .section-header { padding: 15px 10px; text-align: center; flex-direction: column; }
+        .hide-mobile { display: none; }
+
+        /* تعديلات محددة لقائمة الطلبات في التلفون */
+        .badge { padding: 4px 8px; font-size: 9px; }
+        .details-box { padding: 15px 10px; }
+        
+        /* جعل الأزرار داخل التفاصيل أكثر تناسقاً */
+        .btn-gold { padding: 6px 12px; font-size: 10px; width: 100%; text-align: center; margin-top: 5px; }
+        form { flex-direction: column; gap: 5px; }
+        form input, form select { width: 100% !important; margin: 0 !important; }
     }
 </style>
 
@@ -211,9 +250,13 @@
                             {% endif %}
                         </td>
                         <td>
-                            <div style="display: flex; gap: 10px;">
-                                <a href="{% url 'admin:store_product_change' product.pk %}" class="btn-gold">تعديل</a>
-                                <a href="{% url 'delete_product' product.pk %}" class="btn-gold btn-danger" onclick="return confirm('هل أنت متأكد من حذف المنتج نهائياً؟')">حذف</a>
+                            <div style="display: flex; gap: 8px;">
+                                <a href="{% url 'admin:store_product_change' product.pk %}" class="btn-gold" style="background: #1a1a1a; color: #fff; border: none; padding: 8px 15px;">
+                                    <i class="fas fa-edit"></i> تعديل
+                                </a>
+                                <a href="{% url 'delete_product' product.pk %}" class="btn-gold btn-danger" onclick="return confirm('هل أنت متأكد من حذف المنتج نهائياً؟')" style="padding: 8px 15px;">
+                                    <i class="fas fa-trash"></i> حذف
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -233,7 +276,7 @@
                     <tr>
                         <th>رقم الطلب</th>
                         <th>العميل</th>
-                        <th>الإجمالي النهائي</th>
+                        <th>الإجمالي</th>
                         <th>الحالة</th>
                         <th class="hide-mobile">التاريخ</th>
                         <th></th>
@@ -283,7 +326,7 @@
                                             </div>
                                             <div class="billing-divider"></div>
                                             <div class="billing-row total-row">
-                                                <span class="billing-label" style="font-size: 1.4rem;">الصافي للتحصيل:</span>
+                                                <span class="billing-label">الصافي:</span>
                                                 <span class="billing-value" style="color: var(--accent-gold);">{{ order.total_price|floatformat:0 }} ج.م</span>
                                             </div>
                                         </div>
@@ -298,10 +341,10 @@
                                             <div><i class="fas fa-envelope" style="width: 25px; color: var(--accent-gold);"></i> {{ order.email }}</div>
                                         </div>
 
-                                        <h4 style="margin-bottom: 15px; font-size: 0.9rem;">تغيير حالة الطلب</h4>
-                                        <form method="POST" action="{% url 'update_order_status' order.id %}" style="display: flex; gap: 10px; margin-bottom: 25px;">
+                                        <h4 style="margin-bottom: 15px; font-size: 0.9rem;">تغيير الحالة</h4>
+                                        <form method="POST" action="{% url 'update_order_status' order.id %}">
                                             {% csrf_token %}
-                                            <select name="status" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff;">
+                                            <select name="status" style="padding: 10px; border: 1px solid #ddd; background: #fff;">
                                                 {% for code, label in order.STATUS_CHOICES %}
                                                 <option value="{{ code }}" {% if order.status == code %}selected{% endif %}>{{ label }}</option>
                                                 {% endfor %}
@@ -309,10 +352,10 @@
                                             <button type="submit" class="btn-gold" style="background: #000; color: #fff; border: none;">تحديث</button>
                                         </form>
 
-                                        <h4 style="margin-bottom: 15px; font-size: 0.9rem;">تطبيق خصم يدوي</h4>
-                                        <form method="POST" action="{% url 'apply_order_discount' order.id %}" style="display: flex; gap: 10px;">
+                                        <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 0.9rem;">تطبيق خصم</h4>
+                                        <form method="POST" action="{% url 'apply_order_discount' order.id %}">
                                             {% csrf_token %}
-                                            <input type="number" name="discount_amount" placeholder="المبلغ (ج.م)" style="flex: 1; padding: 10px; border: 1px solid #ddd;">
+                                            <input type="number" name="discount_amount" placeholder="المبلغ (ج.م)" style="padding: 10px; border: 1px solid #ddd;">
                                             <button type="submit" class="btn-gold">حفظ</button>
                                         </form>
                                     </div>
@@ -332,13 +375,21 @@
         </div>
         <div class="table-container">
             <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">المرسل</th>
+                        <th>الموضوع</th>
+                        <th class="hide-mobile">التاريخ</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
                 <tbody>
                     {% for msg in messages %}
                     <tr style="cursor: pointer;" onclick="toggleExpand('msg-{{ msg.id }}')">
-                        <td style="width: 20%;"><strong>{{ msg.name }}</strong></td>
+                        <td><strong>{{ msg.name }}</strong></td>
                         <td style="color: var(--accent-gold); font-weight: 600;">{{ msg.subject }}</td>
-                        <td class="hide-mobile" style="text-align: left;">{{ msg.created_at|date:"d M, Y" }}</td>
-                        <td style="width: 50px;"><i class="fas fa-chevron-down" style="opacity: 0.3;"></i></td>
+                        <td class="hide-mobile">{{ msg.created_at|date:"d M, Y" }}</td>
+                        <td><i class="fas fa-chevron-down" style="opacity: 0.3;"></i></td>
                     </tr>
                     <tr id="msg-{{ msg.id }}" class="details-expand-row">
                         <td colspan="4">
@@ -347,7 +398,7 @@
                                     <p style="line-height: 1.8; font-size: 15px; margin-bottom: 25px;">{{ msg.message|linebreaks }}</p>
                                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px; flex-wrap: wrap; gap: 15px;">
                                         <div style="font-size: 13px; color: var(--text-dim);">
-                                            <span style="margin-left: 20px;"><i class="fas fa-envelope"></i> {{ msg.email }}</span>
+                                            <span style="margin-left: 15px;"><i class="fas fa-envelope"></i> {{ msg.email }}</span>
                                             <span><i class="fas fa-phone"></i> {{ msg.phone }}</span>
                                         </div>
                                         <a href="mailto:{{ msg.email }}" class="btn-gold">الرد الرسمي</a>
@@ -369,8 +420,6 @@
     function toggleExpand(id) {
         const row = document.getElementById(id);
         const isVisible = row.style.display === 'table-row';
-        
-        const prefix = id.split('-')[0];
         if (!isVisible) {
             row.style.display = 'table-row';
             row.classList.add('animate__animated', 'animate__fadeIn');
