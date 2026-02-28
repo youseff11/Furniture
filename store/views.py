@@ -540,12 +540,34 @@ def update_order_status(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(Order, id=order_id)
         new_status = request.POST.get('status')
+        old_status = order.status # حفظ الحالة القديمة للمقارنة
+
         if new_status in dict(Order.STATUS_CHOICES):
+            # التأكد من أننا نغير الحالة إلى ملغي ولم يكن ملغياً من قبل (لتجنب تكرار الإرجاع)
+            if new_status == 'Canceled' and old_status != 'Canceled':
+                with transaction.atomic(): # استخدام الترانزاكشن لضمان سلامة البيانات
+                    for item in order.items.all():
+                        # محاولة العثور على المقاس المحدد للمنتج
+                        variant_size = ProductSize.objects.filter(
+                            variant__product=item.product,
+                            variant__color_name=item.color,
+                            size_name=item.size
+                        ).first()
+
+                        if variant_size:
+                            variant_size.stock += item.quantity
+                            variant_size.save()
+                        elif item.product:
+                            # إذا لم يكن هناك نظام مقاسات، نعدل مخزن المنتج العام
+                            item.product.stock += item.quantity
+                            item.product.save()
+
             order.status = new_status
             order.save() 
             messages.success(request, f'تم تحديث حالة الطلب #{order.id} إلى {new_status}')
         else:
             messages.error(request, 'حالة طلب غير صالحة.')
+            
     return redirect('dashboard')
 
 @user_passes_test(is_admin, login_url='login')
@@ -590,20 +612,105 @@ def apply_order_discount(request, order_id):
         order = get_object_or_404(Order, id=order_id)
         try:
             discount_amount = Decimal(request.POST.get('discount_amount', '0'))
+            # حساب الإجمالي الأصلي
             original_total = sum(Decimal(str(i.quantity * i.price_at_purchase)) for i in order.items.all())
             
             if 0 <= discount_amount <= original_total:
-                order.total_price = original_total - discount_amount
+                new_total = original_total - discount_amount
+                order.total_price = new_total
                 order.save()
-                messages.success(request, f'تم تطبيق خصم بقيمة {discount_amount} ج.م')
-                send_mail("تحديث السعر", f"تم تطبيق خصم على طلبك #{order.id}. السعر الجديد: {order.total_price}", 
-                          settings.EMAIL_HOST_USER, [order.email], fail_silently=True)
-            else:
-                messages.error(request, 'قيمة الخصم غير منطقية.')
-        except Exception:
-            messages.error(request, 'خطأ في معالجة الخصم.')
-    return redirect('dashboard')
 
+                # --- بناء صفوف المنتجات للجدول ---
+                items_html = ""
+                domain = request.get_host()
+                protocol = 'https' if request.is_secure() else 'http'
+
+                for item in order.items.all():
+                    variant = ProductVariant.objects.filter(product=item.product, color_name=item.color).first()
+                    img_path = variant.variant_image.url if variant and variant.variant_image else item.product.main_image.url
+                    image_url = f"{protocol}://{domain}{img_path}"
+                    
+                    items_html += f"""
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align:right;">
+                            <img src="{image_url}" width="50" height="50" style="border-radius:5px; vertical-align:middle; margin-left:10px; object-fit:cover;">
+                            <span style="color:#333; font-weight:bold;">{item.product.name}</span>
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align:center;">{item.quantity}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align:left;">{int(item.quantity * item.price_at_purchase)} ج.م</td>
+                    </tr>
+                    """
+
+                # --- التصميم الاحترافي للرسالة ---
+                html_message = f"""
+                <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2d1b0; border-radius: 15px; overflow: hidden; background-color: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #c5a059 0%, #b8860b 100%); color: #ffffff; padding: 25px; text-align: center;">
+                        <h2 style="margin: 0;">أبو يحيى لتصنيع الأثاث</h2>
+                        <p style="margin: 5px 0 0; opacity: 0.9;">تحديث السعر للطلب #{order.id}</p>
+                    </div>
+                    
+                    <div style="padding: 30px; line-height: 1.6; color: #444; text-align: right;">
+                        <h3 style="color: #b8860b;">أهلاً {order.name}،</h3>
+                        <p>يسعدنا إبلاغك بأنه تم تطبيق <strong>خصم خاص</strong> على طلبك. أدناه تفاصيل الفاتورة المحدثة:</p>
+                        
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                            <thead>
+                                <tr style="background-color: #f9f6f0; color: #333;">
+                                    <th style="padding: 10px; text-align: right; border-bottom: 2px solid #c5a059;">المنتج</th>
+                                    <th style="padding: 10px; text-align: center; border-bottom: 2px solid #c5a059;">الكمية</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #c5a059;">السعر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {items_html}
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 20px; padding: 15px; background-color: #fcfaf5; border-radius: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #777;">
+                                <span>الإجمالي الأصلي:</span>
+                                <span>{int(original_total)} ج.م</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #d9534f; font-weight: bold;">
+                                <span>قيمة الخصم:</span>
+                                <span>- {int(discount_amount)} ج.م</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2d1b0; pt-10px; margin-top: 10px; font-size: 20px; color: #b8860b; font-weight: bold;">
+                                <span>الإجمالي الجديد:</span>
+                                <span>{int(new_total)} ج.م</span>
+                            </div>
+                        </div>
+
+                        <p style="margin-top: 25px; font-size: 14px; color: #666; border-right: 3px solid #c5a059; padding-right: 10px;">
+                            سيتم التواصل معكم قريباً لتأكيد موعد التسليم النهائي. شكراً لاختياركم "أبو يحيى".
+                        </p>
+                    </div>
+
+                    <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #999;">
+                        © 2026 مصنع أبو يحيى للأثاث. جميع الحقوق محفوظة.
+                    </div>
+                </div>
+                """
+
+                subject = f"هدية من أبو يحيى: تم تطبيق خصم على طلبك #{order.id}"
+                plain_message = f"تم تطبيق خصم بقيمة {discount_amount} ج.م. الإجمالي الجديد: {new_total} ج.م"
+
+                send_mail(
+                    subject=subject,
+                    message=plain_message,
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[order.email],
+                    html_message=html_message,
+                    fail_silently=False  # غيرتها لـ False عشان لو فيه مشكلة في الإعدادات تظهرلك
+                )
+
+                messages.success(request, f'تم تطبيق خصم بقيمة {discount_amount} ج.م وإرسال البريد بنجاح.')
+            else:
+                messages.error(request, 'قيمة الخصم غير منطقية (أكبر من الإجمالي أو أقل من صفر).')
+        except Exception as e:
+            messages.error(request, f'خطأ في معالجة الخصم: {e}')
+            
+    return redirect('dashboard')
 # --- دوال الحسابات والسياسات ---
 
 def login_view(request):
