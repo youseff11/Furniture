@@ -11,6 +11,7 @@
         --text-main: #333333;
         --border-luxury: rgba(197, 160, 89, 0.2);
         --luxury-ease: cubic-bezier(0.23, 1, 0.32, 1);
+        --whatsapp-green: #25D366;
     }
 
     body {
@@ -56,6 +57,50 @@
         margin-top: 15px;
         font-weight: 400;
     }
+
+    /* --- WhatsApp Style --- */
+    .wa-float-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 15px;
+    }
+    .wa-contact-list {
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        transform-origin: bottom right;
+    }
+    .wa-contact-item {
+        background: white;
+        color: #333;
+        padding: 12px 20px;
+        border-radius: 50px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'IBM Plex Sans Arabic', sans-serif;
+        font-size: 14px;
+        transition: 0.3s var(--luxury-ease);
+        border: 1px solid #eee;
+    }
+    .wa-contact-item i { color: var(--whatsapp-green); font-size: 18px; }
+    .wa-contact-item:hover { transform: translateX(-10px); background: var(--accent-gold); color: white; }
+    .wa-contact-item:hover i { color: white; }
+    .wa-main-btn {
+        width: 65px; height: 65px; background: var(--whatsapp-green);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 32px; cursor: pointer;
+        box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3); transition: 0.4s;
+    }
+    .wa-float-container.active .wa-contact-list { display: flex; animation: slideIn 0.4s var(--luxury-ease) forwards; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     .contact-grid {
         display: grid;
@@ -190,6 +235,22 @@
         .section-title h1 { font-size: 32px; }
     }
 </style>
+
+<div class="wa-float-container" id="waContainer">
+    <div class="wa-contact-list">
+        <a href="https://wa.me/201020304907?text=مرحباً، أرغب في الاستفسار عن مبيعات أبو يحيى" target="_blank" class="wa-contact-item">
+            <span>مبيعات / استفسارات: 01020304907</span>
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+        <a href="https://wa.me/201080504973?text=مرحباً، أرغب في الاستفسار عن مبيعات أبو يحيى" target="_blank" class="wa-contact-item">
+            <span>مبيعات / استفسارات: 01080504973</span>
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+    </div>
+    <div class="wa-main-btn" onclick="document.getElementById('waContainer').classList.toggle('active')">
+        <i class="fa-brands fa-whatsapp"></i>
+    </div>
+</div>
 
 <div class="contact-wrapper">
     <div class="section-title">
