@@ -141,51 +141,17 @@
         top: 50%; left: 50%; transform: translate(-50%, -50%);
     }
 
-    /* --- MOBILE OPTIMIZATION (HERO ONLY) --- */
+    /* --- التعديل المطلوب للموبايل --- */
     @media (max-width: 768px) {
-        .hero-section {
-            height: 100vh;
-            padding-top: 20px;
-            align-items: center;
-        }
-
-        .hero-content {
-            padding-left: 5%;
-            padding-right: 5%;
-            text-align: center;
-        }
-
         .hero-title-main {
-            font-size: clamp(45px, 15vw, 70px);
-            line-height: 1.1;
+            font-size: clamp(50px, 14vw, 80px); /* ضبط الحجم ليناسب الشاشة */
         }
-
         .hero-title-main .gold-text {
-            margin-left: 0;
-            margin-top: 10px;
-            margin-bottom: 10px;
+            margin-left: 2vw; /* تحريك الكلمة لليسار قليلاً بدلاً من 10vw لظهور حرف الـ d */
         }
-
         .hero-description {
-            margin: 30px auto;
-            font-size: 14px;
-            padding: 0 15px;
-            border-left: none;
-            border-bottom: 1px solid var(--accent-gold);
-            padding-bottom: 20px;
-            max-width: 100%;
-        }
-
-        .btn-lusso-v2 {
-            width: 150px;
-            height: 150px;
-            font-size: 10px;
-            margin: 0 auto;
-        }
-
-        .bg-text-deco {
-            font-size: 60vw;
-            opacity: 0.04;
+            max-width: 280px; /* تقليل العرض ليناسب الموبايل */
+            font-size: 13px;
         }
     }
 
@@ -397,7 +363,6 @@
 </section>
 
 <script>
-    // WhatsApp logic
     document.addEventListener('click', (e) => {
         const container = document.getElementById('waContainer');
         if (!container.contains(e.target)) {
@@ -405,18 +370,14 @@
         }
     });
 
-    // 1. Hero Parallax Effect (Disabled/Subtle on Mobile)
     document.addEventListener('mousemove', (e) => {
-        if (window.innerWidth > 768) {
-            const { clientX, clientY } = e;
-            const xPos = (clientX / window.innerWidth - 0.5) * 30;
-            const yPos = (clientY / window.innerHeight - 0.5) * 30;
-            gsap.to('#heroImage', { duration: 1, x: xPos, y: yPos, ease: "power2.out" });
-            gsap.to('.hero-title-main', { duration: 1.5, x: -xPos * 1.5, y: -yPos * 1.5, ease: "power3.out" });
-        }
+        const { clientX, clientY } = e;
+        const xPos = (clientX / window.innerWidth - 0.5) * 30;
+        const yPos = (clientY / window.innerHeight - 0.5) * 30;
+        gsap.to('#heroImage', { duration: 1, x: xPos, y: yPos, ease: "power2.out" });
+        gsap.to('.hero-title-main', { duration: 1.5, x: -xPos * 1.5, y: -yPos * 1.5, ease: "power3.out" });
     });
 
-    // 2. Particles Engine
     const canvas = document.getElementById('luxury-canvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
@@ -439,10 +400,7 @@
             ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
         }
     }
-    function initParticles() { 
-        const count = window.innerWidth < 768 ? 50 : 150;
-        for (let i = 0; i < count; i++) particles.push(new Particle()); 
-    }
+    function initParticles() { for (let i = 0; i < 150; i++) particles.push(new Particle()); }
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         particles.forEach((p, i) => { p.update(); p.draw(); if (p.opacity <= 0) particles[i] = new Particle(); });
@@ -451,7 +409,6 @@
     window.addEventListener('resize', resize);
     resize(); initParticles(); animate();
 
-    // 3. Scroll Reveal for Bento Grid
     gsap.registerPlugin(ScrollTrigger);
     gsap.utils.toArray(".bento-item").forEach((item, i) => {
         gsap.from(item, {
