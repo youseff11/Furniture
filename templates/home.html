@@ -141,7 +141,55 @@
         top: 50%; left: 50%; transform: translate(-50%, -50%);
     }
 
-    /* --- Professional Re-designed Showcase Section --- */
+    /* --- MOBILE OPTIMIZATION (HERO ONLY) --- */
+    @media (max-width: 768px) {
+        .hero-section {
+            height: 100vh;
+            padding-top: 20px;
+            align-items: center;
+        }
+
+        .hero-content {
+            padding-left: 5%;
+            padding-right: 5%;
+            text-align: center;
+        }
+
+        .hero-title-main {
+            font-size: clamp(45px, 15vw, 70px);
+            line-height: 1.1;
+        }
+
+        .hero-title-main .gold-text {
+            margin-left: 0;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .hero-description {
+            margin: 30px auto;
+            font-size: 14px;
+            padding: 0 15px;
+            border-left: none;
+            border-bottom: 1px solid var(--accent-gold);
+            padding-bottom: 20px;
+            max-width: 100%;
+        }
+
+        .btn-lusso-v2 {
+            width: 150px;
+            height: 150px;
+            font-size: 10px;
+            margin: 0 auto;
+        }
+
+        .bg-text-deco {
+            font-size: 60vw;
+            opacity: 0.04;
+        }
+    }
+
+    /* --- Showcase Section --- */
     .new-showcase {
         padding: 160px 5%;
         background: #e5e1e1;
@@ -224,78 +272,36 @@
 
     /* --- WhatsApp Multi-Contact Style --- */
     .wa-float-container {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 15px;
+        position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+        display: flex; flex-direction: column; align-items: flex-end; gap: 15px;
     }
 
     .wa-contact-list {
-        display: none;
-        flex-direction: column;
-        gap: 10px;
-        margin-bottom: 5px;
+        display: none; flex-direction: column; gap: 10px; margin-bottom: 5px;
         transform-origin: bottom right;
     }
 
     .wa-contact-item {
-        background: white;
-        color: #333;
-        padding: 12px 20px;
-        border-radius: 50px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-family: 'Cairo', sans-serif;
-        font-size: 14px;
-        font-weight: 600;
-        transition: 0.3s var(--luxury-ease);
-        white-space: nowrap;
-        border: 1px solid #eee;
+        background: white; color: #333; padding: 12px 20px; border-radius: 50px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-decoration: none;
+        display: flex; align-items: center; gap: 12px; font-family: 'Cairo', sans-serif;
+        font-size: 14px; font-weight: 600; transition: 0.3s var(--luxury-ease);
+        white-space: nowrap; border: 1px solid #eee;
     }
 
-    .wa-contact-item i {
-        color: var(--whatsapp-green);
-        font-size: 18px;
-    }
-
-    .wa-contact-item:hover {
-        transform: translateX(-10px);
-        background: var(--accent-gold);
-        color: white;
-    }
-    
+    .wa-contact-item i { color: var(--whatsapp-green); font-size: 18px; }
+    .wa-contact-item:hover { transform: translateX(-10px); background: var(--accent-gold); color: white; }
     .wa-contact-item:hover i { color: white; }
 
     .wa-main-btn {
-        width: 65px;
-        height: 65px;
-        background: var(--whatsapp-green);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 32px;
-        cursor: pointer;
-        box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        width: 65px; height: 65px; background: var(--whatsapp-green); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; color: white;
+        font-size: 32px; cursor: pointer; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
         transition: 0.4s var(--luxury-ease);
     }
 
-    .wa-main-btn:hover {
-        transform: scale(1.1) rotate(15deg);
-    }
-
-    .wa-float-container.active .wa-contact-list {
-        display: flex;
-        animation: slideIn 0.4s var(--luxury-ease) forwards;
-    }
+    .wa-main-btn:hover { transform: scale(1.1) rotate(15deg); }
+    .wa-float-container.active .wa-contact-list { display: flex; animation: slideIn 0.4s var(--luxury-ease) forwards; }
 
     @keyframes slideIn {
         from { opacity: 0; transform: translateY(20px) scale(0.8); }
@@ -391,7 +397,7 @@
 </section>
 
 <script>
-    // WhatsApp logic: Close when clicking outside
+    // WhatsApp logic
     document.addEventListener('click', (e) => {
         const container = document.getElementById('waContainer');
         if (!container.contains(e.target)) {
@@ -399,13 +405,15 @@
         }
     });
 
-    // 1. Hero Parallax Effect
+    // 1. Hero Parallax Effect (Disabled/Subtle on Mobile)
     document.addEventListener('mousemove', (e) => {
-        const { clientX, clientY } = e;
-        const xPos = (clientX / window.innerWidth - 0.5) * 30;
-        const yPos = (clientY / window.innerHeight - 0.5) * 30;
-        gsap.to('#heroImage', { duration: 1, x: xPos, y: yPos, ease: "power2.out" });
-        gsap.to('.hero-title-main', { duration: 1.5, x: -xPos * 1.5, y: -yPos * 1.5, ease: "power3.out" });
+        if (window.innerWidth > 768) {
+            const { clientX, clientY } = e;
+            const xPos = (clientX / window.innerWidth - 0.5) * 30;
+            const yPos = (clientY / window.innerHeight - 0.5) * 30;
+            gsap.to('#heroImage', { duration: 1, x: xPos, y: yPos, ease: "power2.out" });
+            gsap.to('.hero-title-main', { duration: 1.5, x: -xPos * 1.5, y: -yPos * 1.5, ease: "power3.out" });
+        }
     });
 
     // 2. Particles Engine
@@ -431,7 +439,10 @@
             ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
         }
     }
-    function initParticles() { for (let i = 0; i < 150; i++) particles.push(new Particle()); }
+    function initParticles() { 
+        const count = window.innerWidth < 768 ? 50 : 150;
+        for (let i = 0; i < count; i++) particles.push(new Particle()); 
+    }
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         particles.forEach((p, i) => { p.update(); p.draw(); if (p.opacity <= 0) particles[i] = new Particle(); });
