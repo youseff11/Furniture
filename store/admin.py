@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.db import models # تم إضافة الاستيراد هنا للتحكم في شكل الحقول
+from django.db import models 
 import nested_admin
 from .models import Product, Category, ContactMessage, ProductVariant, ProductSize, Order, OrderItem, ProductImage, ProductSpecification
 
@@ -9,7 +9,6 @@ class ProductSpecificationInline(nested_admin.NestedTabularInline):
     model = ProductSpecification
     extra = 1
     fields = ['spec_name', 'spec_value']
-    # هذا التعديل يجعل خانة القيمة تظهر كمربع نص كبير (Textarea) داخل الجدول
     formfield_overrides = {
         models.TextField: {'widget': admin.widgets.AdminTextareaWidget(attrs={'rows': 2, 'cols': 40})},
     }
@@ -31,7 +30,10 @@ class ProductImageInline(nested_admin.NestedTabularInline):
 class ProductSizeInline(nested_admin.NestedTabularInline):
     model = ProductSize
     extra = 1
-    fields = ['size_name', 'stock']
+    # تم إضافة حقول السعر والخصم هنا لتظهر في لوحة التحكم
+    fields = ['size_name', 'stock', 'price', 'discount_price']
+    verbose_name = "Size & Pricing"
+    verbose_name_plural = "Sizes & Pricing"
 
 # --- 4. ProductVariantInline ---
 class ProductVariantInline(nested_admin.NestedStackedInline):
@@ -63,8 +65,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
             'fields': ('name', 'sku', 'category', 'is_new_arrival'),
             'classes': ('wide',),
         }),
-        ('Pricing & Inventory', {
+        ('Pricing & Inventory (Default)', {
             'fields': (('price', 'discount_price'), 'stock'),
+            'description': 'الأسعار هنا هي الأسعار الافتراضية إذا لم يتم تحديد سعر خاص للمقاس',
         }),
     )
     readonly_fields = ['stock']
@@ -100,7 +103,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
                 original_price, discount_price
             )
         return format_html('<b>{}</b> <small>EGP</small>', original_price)
-    display_price.short_description = 'Price (Before/After)'
+    display_price.short_description = 'Base Price'
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)

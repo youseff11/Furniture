@@ -1,9 +1,9 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZH9JG248D6"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-ZH9JG248D6');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ZH9JG248D6');
 </script>
 
 {% extends 'base.html' %}
@@ -27,7 +27,6 @@
 
     body { background-color: var(--luxury-bg); font-family: 'Montserrat', sans-serif; }
 
-    /* تنسيق رسائل التنبيه - Django Messages */
     .messages-container {
         position: fixed;
         top: 100px;
@@ -49,7 +48,6 @@
         border: 1px solid var(--accent-gold);
         animation: fadeInDown 0.5s both;
     }
-    /* تعديل: إبقاء استايل التحذير فقط */
     .alert-warning, .alert-error { background: #fff3cd; color: #856404; border-right: 5px solid #ffc107; }
 
     .cart-wrapper {
@@ -155,6 +153,7 @@
         text-decoration: none;
         transition: var(--luxury-ease);
         border: 1px solid var(--text-main);
+        display: inline-block;
     }
     .checkout-btn:hover { background: transparent; color: var(--text-main); transform: translateY(-3px); }
 
@@ -251,7 +250,7 @@
                             </div>
                         </td>
                         <td class="desktop-only">
-                            <span style="font-family: 'Playfair Display';">{{ item.actual_price|floatformat:0 }} ج.م</span>
+                            <span style="font-family: 'Playfair Display';">{{ item.price|floatformat:0 }} ج.م</span>
                         </td>
                         <td>
                             <div class="qty-controls">
@@ -285,7 +284,7 @@
             <div class="empty-cart-msg animate__animated animate__fadeInUp" style="text-align: center;">
                 <i class="fa-solid fa-bag-shopping" style="font-size: 3rem; color: var(--border-luxury); margin-bottom: 20px;"></i>
                 <p style="color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;">حقيبة المشتريات فارغة</p>
-                <a href="{% url 'shop' %}" class="checkout-btn" style="display:inline-block; margin-top: 30px;">اكتشف مجموعتنا</a>
+                <a href="{% url 'shop' %}" class="checkout-btn" style="margin-top: 30px;">اكتشف مجموعتنا</a>
             </div>
             {% endif %}
         </div>
@@ -325,7 +324,7 @@
                 {
                     item_id: '{{ item.product.id }}',
                     item_name: '{{ item.product.name }}',
-                    price: {{ item.actual_price }},
+                    price: {{ item.price }},
                     quantity: {{ item.quantity }}
                 }{% if not forloop.last %},{% endif %}
                 {% endfor %}

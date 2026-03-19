@@ -127,24 +127,34 @@ def add_to_cart(request, product_id):
     item_key = f"{product_id}_{selected_color}_{selected_size}"
     
     try:
-        # جلب تفاصيل المخزن بدقة
-        stock_item = ProductSize.objects.get(
+        # 1. جلب تفاصيل المقاس والمخزن والأسعار الخاصة به
+        stock_item = ProductSize.objects.select_related('variant__product').get(
             variant__product_id=product_id,
             variant__color_name=selected_color,
             size_name=selected_size
         )
         
+        product = stock_item.variant.product
+        
+        # 2. تحديد السعر بذكاء باستخدام الخاصية get_effective_price (بدون أقواس)
+        final_price = float(stock_item.get_effective_price)
+
         current_qty = cart.get(item_key, {}).get('quantity', 0)
         
+        # 3. التحقق من المخزن
         if current_qty < stock_item.stock:
             if item_key in cart:
                 cart[item_key]['quantity'] += 1
+                cart[item_key]['price'] = final_price 
             else:
                 cart[item_key] = {
                     'product_id': product_id,
+                    'name': product.name,
                     'quantity': 1,
+                    'price': final_price,
                     'color': selected_color,
-                    'size': selected_size
+                    'size': selected_size,
+                    'image': stock_item.variant.variant_image.url if stock_item.variant.variant_image else ""
                 }
             
             request.session[user_cart_key] = cart
@@ -155,6 +165,8 @@ def add_to_cart(request, product_id):
             
     except ProductSize.DoesNotExist:
         messages.error(request, "عذراً، هذا النوع غير متوفر حالياً.")
+    except Exception as e:
+        messages.error(request, "حدث خطأ أثناء إضافة المنتج للسلة.")
 
     return redirect(request.META.get('HTTP_REFERER', 'shop'))
 
@@ -175,8 +187,14 @@ def cart_view(request):
         try:
             product = Product.objects.get(id=item_data.get('product_id'))
             quantity = item_data.get('quantity', 1)
-            # تحديد السعر بناءً على وجود خصم
-            price = product.discount_price if product.discount_price else product.price
+            
+            # جلب السعر الفعلي من السلة، ولو مش موجود يرجع للسعر الافتراضي للمنتج
+            saved_price = item_data.get('price')
+            if saved_price is not None:
+                price = Decimal(str(saved_price))
+            else:
+                price = product.get_effective_price
+
             subtotal = price * quantity
             total_price += subtotal
             
@@ -191,9 +209,9 @@ def cart_view(request):
                 'size': item_data.get('size', 'N/A'),
                 'display_image': display_image,
                 'subtotal': subtotal,
-                'actual_price': price
+                'price': price
             })
-        except (Product.DoesNotExist, AttributeError):
+        except (Product.DoesNotExist, AttributeError, TypeError, ValueError):
             continue
         
     return render(request, 'cart.html', {'cart_items': cart_items, 'total_price': total_price})
@@ -282,8 +300,11 @@ def checkout_abuyhia(request):
             if product.stock < quantity_requested:
                 messages.error(request, f"عذراً، المنتج {product.name} غير متوفر حالياً.")
                 return redirect('cart_view')
-
-        price = product.discount_price if product.discount_price else product.price
+        saved_price = item_data.get('price')
+        if saved_price is not None:
+            price = Decimal(str(saved_price))
+        else:
+            price = product.get_effective_price
         subtotal = price * quantity_requested
         total_price += subtotal
 

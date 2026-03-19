@@ -9,7 +9,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib.auth.models import User  # إضافة استيراد موديل المستخدمين
+from django.contrib.auth.models import User
 from colorfield.fields import ColorField
 from django_resized import ResizedImageField
 
@@ -34,8 +34,8 @@ class Product(models.Model):
     sku = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name="SKU")
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, related_name='products', null=True, blank=True)
     description = models.TextField(blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2) 
-    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) 
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Base Price") 
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Base Discount Price") 
     stock = models.PositiveIntegerField(default=0, verbose_name="Total Stock", editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -72,7 +72,7 @@ class Product(models.Model):
         if self.price and self.discount_price and self.price > self.discount_price:
             discount = self.price - self.discount_price
             percentage = (discount / self.price) * 100
-            return int(percentage)  # إرجاع الرقم كعدد صحيح (مثلاً 20 بدلاً من 20.0)
+            return int(percentage)
         return 0
 
     @property
@@ -89,12 +89,11 @@ class Product(models.Model):
         return None
 
 
-# --- Product Specifications (الجدول الجديد للمواصفات) ---
+# --- Product Specifications ---
 
 class ProductSpecification(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='specifications')
     spec_name = models.CharField(max_length=255, verbose_name="اسم المواصفة (مثال: الألوان)")
-    # تم تغيير الحقل إلى TextField ليسمح بإدخال قيم كثيرة جداً ومفصلة
     spec_value = models.TextField(verbose_name="القيم (يمكنك إدخال أكثر من قيمة مفصولة بفاصلة)")
 
     def __str__(self):
@@ -111,10 +110,11 @@ class ProductVariant(models.Model):
         size=[800, 1000], quality=75, upload_to='variants/', 
         force_format='WEBP'
     )
+    
     @property
     def total_stock(self):
-        """حساب مجموع المخزن لكل المقاسات التابعة لهذا اللون"""
         return self.sizes.aggregate(total=models.Sum('stock'))['total'] or 0
+        
     def __str__(self):
         return f"{self.product.name} - {self.color_name}"
 
@@ -132,9 +132,22 @@ class ProductSize(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='sizes')
     size_name = models.CharField(max_length=20)
     stock = models.PositiveIntegerField(default=0)
+    
+    # التعديل الجديد: أسعار خاصة بكل مقاس (اختيارية)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Price for this size")
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Discount price for this size")
 
     def __str__(self):
         return f"{self.variant} - {self.size_name}"
+
+    @property
+    def get_effective_price(self):
+        """إرجاع سعر المقاس إذا وجد، وإلا إرجاع سعر المنتج الأساسي"""
+        if self.discount_price:
+            return self.discount_price
+        if self.price:
+            return self.price
+        return self.variant.product.get_effective_price
 
 
 @receiver([post_save, post_delete], sender=ProductSize)
@@ -152,7 +165,6 @@ class Order(models.Model):
         ('Canceled', 'Canceled ❌'),
     ]
     
-    # إضافة حقل المستخدم لحل مشكلة TypeError في الـ Checkout
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     
     name = models.CharField(max_length=255)
@@ -195,12 +207,10 @@ class Order(models.Model):
 
     @property
     def get_items_total(self):
-        """حساب مجموع أسعار جميع المنتجات في الطلب قبل الخصم اليدوي"""
         return sum(item.subtotal for item in self.items.all())
 
     @property
     def get_discount_amount(self):
-        """حساب قيمة الخصم اليدوي المطبق"""
         total_items = self.get_items_total
         discount = total_items - self.total_price
         return discount if discount > 0 else 0
