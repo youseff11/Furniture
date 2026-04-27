@@ -102,7 +102,7 @@ def contact_view(request):
         full_message = f"New message from {name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
         try:
             send_mail(
-                subject=f"Ice Club Store: {subject}",
+                subject=f"Abo-Yahia Store: {subject}",
                 message=full_message,
                 from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[settings.EMAIL_HOST_USER],
